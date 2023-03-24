@@ -1,0 +1,9 @@
+__pycache__
+.ipynb_checkpoints
+data-bin
+gpt2_bpe
+wikitext-103-raw
+.sw?
+*.log
+*.tar.gz
+*.zip
