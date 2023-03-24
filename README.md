@@ -1,6 +1,22 @@
 # TNN
 
-Luminous Fork (2023-03-21): Clone using `git clone --recursive git@gitlab.luminouscomputing.com:ml/research/tnn.git`. If you miss the recursive flag, you can update after the fact `cd fairseq-tnn; git submodule update --init`.
+Luminous Fork (2023-03-21): Clone using 
+```
+git clone --recursive git@gitlab.luminouscomputing.com:ml/research/tnn.git
+```
+
+If you miss the recursive flag, you can update after the fact
+```
+cd fairseq-tnn
+git submodule update --init
+```
+
+Linear Approximation to be found in `laxtnn/`. Run via
+```
+bash laxtnn/scripts/script_alm.sh
+```
+
+---
 
 Official implementation of Toeplitz Neural Network in our ICLR 2023 paper - [Toeplitz Neural Network for Sequence Modeling](https://openreview.net/forum?id=IxmWsm4xrua). This repo does not contain specific codes, but only scripts and some instructions on how to reproduce the results of the paper. The overall directory is as follows:
 
