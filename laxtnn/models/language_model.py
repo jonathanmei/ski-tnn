@@ -108,7 +108,7 @@ def laxtnn_decay_99_pre(args):
     args.no_token_positional_embeddings = True
     # gtu
     args.act_fun = "silu"
-    args.causal = True
+    args.causal = False
     args.expand_ratio = 3
     args.use_norm = False
     args.norm_type = "simplermsnorm"
@@ -121,3 +121,4 @@ def laxtnn_decay_99_pre(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = True

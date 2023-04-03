@@ -42,6 +42,7 @@ class GtuModule(nn.Module):
         residual=False,
         gamma=0.999,
         act_type="none",
+        tno_fd=False,
     ):
         super().__init__()
         # get local varables
@@ -69,6 +70,7 @@ class GtuModule(nn.Module):
             residual=residual,
             gamma=gamma,
             act_type=act_type,
+            tno_fd=tno_fd,
         )
 
     def prepare_for_onnx_export_(self):
@@ -219,4 +221,3 @@ class GtuModule(nn.Module):
 
         for key, value in items_to_add.items():
             state_dict[key] = value
-

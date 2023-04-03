@@ -14,6 +14,7 @@ echo $PORT
 LR=0.0005
 CLIP_NORM=1.0
 decay=0.2
+WANDB_PROJECT=tnn-fd
 
 fairseq-train --task language_modeling \
     $DATA_DIR \
@@ -28,4 +29,7 @@ fairseq-train --task language_modeling \
     --max-tokens $MAX_TOKEN --update-freq $UPDATE_FREQ \
     --ddp-backend=legacy_ddp \
     --batch-size $BATCH_SIZE \
-    --max-update $MAX_UPDATE --log-interval 10 2>&1 | tee $ARCH.log
+    --max-update $MAX_UPDATE \
+    --log-interval 10 \
+    --wandb-project $WANDB_PROJECT \
+     2>&1 | tee $ARCH.log \

@@ -5,6 +5,7 @@ import torch.nn as nn
 from fairseq.modules.helpers import get_activation_fn, get_norm_fn
 
 from .tno import Tno
+from .tno_fd import TnoFD
 
 
 class Gtu(nn.Module):
@@ -29,6 +30,7 @@ class Gtu(nn.Module):
         residual=False,
         gamma=0.99,
         act_type="none",
+        tno_fd=False
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -49,7 +51,8 @@ class Gtu(nn.Module):
         self.o = nn.Linear(d1, embed_dim, bias=bias)
         self.act = get_activation_fn(act_fun)
         # tno
-        self.toep = Tno(
+        TnoModule = TnoFD if tno_fd else Tno
+        self.toep = TnoModule(
             h=num_heads, 
             dim=self.head_dim,
             rpe_dim=rpe_embedding, 

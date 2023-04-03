@@ -75,6 +75,7 @@ class LaxtnnSentenceEncoderLayer(nn.Module):
             residual=getattr(args, "residual", False),
             gamma=getattr(args, "gamma", 0.99),
             act_type=getattr(args, "act_type", "none"),
+            tno_fd=getattr(args, "tno_fd", False),
         )
         
     def residual_connection(self, x, residual):
@@ -128,4 +129,3 @@ class LaxtnnSentenceEncoderLayer(nn.Module):
             x = self.final_layer_norm(x)
 
         return x, None
-

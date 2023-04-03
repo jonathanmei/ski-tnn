@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 from einops import rearrange
@@ -8,7 +9,7 @@ from fairseq.modules.helpers import get_activation_fn, print_params
 from .rpe import Rpe
 
 
-class Tno(nn.Module):
+class TnoFD(nn.Module):
     def __init__(
         self,
         h,
@@ -47,9 +48,10 @@ class Tno(nn.Module):
             self.lambda_ = gamma
             self.gamma = nn.Parameter(torch.randn(h, 1, dim))
 
+        # import ipdb; ipdb.set_trace()
         self.rpe = Rpe(
             dim=rpe_dim,
-            outdim=h * dim,
+            outdim=h * dim * 2,
             residual=residual,
             act=act,
             bias=bias,
@@ -63,6 +65,16 @@ class Tno(nn.Module):
             self.forward = self.forward_non_causal
 
         self.act_fun = get_activation_fn(act_type)
+
+    def get_w(self, n):
+        # if self.par_type == 1:
+        w_axis = torch.linspace(0.0,np.pi,int(n/2+1)).reshape(int(n/2+1), -1)
+        # elif self.par_type == 2:
+        #     index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n
+        # elif self.par_type == 3:
+        #     index = torch.exp(torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n)
+
+        return w_axis
 
     def get_pos(self, n):
         if self.par_type == 1:
@@ -101,32 +113,37 @@ class Tno(nn.Module):
         # n, (d * h) -> h, n, d
         res = rearrange(res, "n (h d) -> h n d", h=self.h)
 
+        D = res.shape[2]//2
+        real, imag = res[:,:,0:D], res[:,:,D::]
+        imag[:,(0,-1),:] = 0.0 # force DC and Nyquist to be real only
+        res = torch.complex(real, imag)
+
         return res
 
     def forward_causal(self, x, dim=-2, normalize=False):
-        import ipdb; ipdb.set_trace()
-
         # x: b, h, n, d
         n = x.shape[dim]
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
         ##### coef
         # 1, d, 1 -> h, 1, d
-
         # import ipdb; ipdb.set_trace()
-        zero = self.rpe_transform(self.get_zero().to(x))
-        pos = self.rpe_transform(self.get_pos(n - 1).to(x))
+        # zero = self.rpe_transform(self.get_zero().to(x))
+        # pos = self.rpe_transform(self.get_pos(n - 1).to(x))
+        fft_size = 2*n
+        pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
 
-        if self.use_decay or self.use_multi_decay:
-            coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
-            if self.use_decay:
-                gamma = self.gamma
-            else:
-                gamma = torch.sigmoid(self.gamma)
-                gamma = self.lambda_ + (1 - self.lambda_) * gamma
-            gamma = gamma**coef
-            pos = gamma * pos
-        a = torch.cat([zero, pos, zero], dim=1)
-        a = self.act_fun(a)
+        # if self.use_decay or self.use_multi_decay:
+        #     coef = torch.arange(0, n).reshape(1, -1, 1).to(x)
+        #     if self.use_decay:
+        #         gamma = self.gamma
+        #     else:
+        #         gamma = torch.sigmoid(self.gamma)
+        #         gamma = self.lambda_ + (1 - self.lambda_) * gamma
+        #     gamma = gamma**coef
+            # pos = gamma * pos
+        # a = torch.cat([zero, pos, zero], dim=1)
+
+        a = self.act_fun(pos_w)
 
         # x: b, h, n, d
         # a: h, l, d
@@ -147,26 +164,31 @@ class Tno(nn.Module):
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
         ##### coef
         # 1, d, 1 -> h, 1, d
-        zero = self.rpe_transform(self.get_zero().to(x))
-        pos = self.rpe_transform(self.get_pos(n - 1).to(x))
-        neg_index = self.get_neg(n - 1).to(x)
-        if self.causal:
-            neg = neg_index
-        else:
-            neg = self.rpe_transform(neg_index)
+        # zero = self.rpe_transform(self.get_zero().to(x))
+        # pos = self.rpe_transform(self.get_pos(n - 1).to(x))
+        
+        # neg_index = self.get_neg(n - 1).to(x)
 
-        if self.use_decay or self.use_multi_decay:
-            coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
-            if self.use_decay:
-                gamma = self.gamma
-            else:
-                gamma = torch.sigmoid(self.gamma)
-                gamma = self.lambda_ + (1 - self.lambda_) * gamma
-            gamma = gamma**coef
-            pos = gamma * pos
-            neg = torch.flip(gamma, dims=[1]) * neg
-        a = torch.cat([zero, pos, zero, neg], dim=1)
-        a = self.act_fun(a)
+        fft_size = 2*n
+        pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
+
+        # if self.causal:
+        #     neg = neg_index
+        # else:
+        #     neg = self.rpe_transform(neg_index)
+
+        # if self.use_decay or self.use_multi_decay:
+        #     coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
+        #     if self.use_decay:
+        #         gamma = self.gamma
+        #     else:
+        #         gamma = torch.sigmoid(self.gamma)
+        #         gamma = self.lambda_ + (1 - self.lambda_) * gamma
+        #     gamma = gamma**coef
+        #     pos = gamma * pos
+        #     neg = torch.flip(gamma, dims=[1]) * neg
+        # a = torch.cat([zero, pos, zero, neg], dim=1)
+        a = self.act_fun(pos_w)
         # x: b, h, n, d
         # a: h, l, d
         output = self.compute(x, a, dim, n)
@@ -183,8 +205,8 @@ class Tno(nn.Module):
         # x: b, h, n, d
         # a: h, n, d
         y = torch.fft.rfft(x, 2 * n, dim=dim)
-        v = torch.fft.rfft(a, 2 * n, dim=dim).unsqueeze(0)
-        u = v * y
+        # v = torch.fft.rfft(a, 2 * n, dim=dim).unsqueeze(0)
+        u = a * y
         output = torch.fft.irfft(u, 2 * n, dim=dim)[:, :, :n, :]
 
         return output
