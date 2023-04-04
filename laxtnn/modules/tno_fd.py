@@ -51,7 +51,11 @@ class TnoFD(nn.Module):
         # import ipdb; ipdb.set_trace()
         self.rpe = Rpe(
             dim=rpe_dim,
+<<<<<<< HEAD
             outdim=h * dim * (1 if causal else 2),
+=======
+            outdim=h * dim * 2,
+>>>>>>> 4d58c6bfcfaf5b1762a920c7db0f387ecd1d081d
             residual=residual,
             act=act,
             bias=bias,
@@ -68,7 +72,11 @@ class TnoFD(nn.Module):
 
     def get_w(self, n):
         # if self.par_type == 1:
+<<<<<<< HEAD
         w_axis = torch.linspace(0.0, np.pi, int(n / 2 + 1)).reshape(int(n / 2 + 1), -1)
+=======
+        w_axis = torch.linspace(0.0,np.pi,int(n/2+1)).reshape(int(n/2+1), -1)
+>>>>>>> 4d58c6bfcfaf5b1762a920c7db0f387ecd1d081d
         # elif self.par_type == 2:
         #     index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n
         # elif self.par_type == 3:
@@ -141,7 +149,11 @@ class TnoFD(nn.Module):
         # import ipdb; ipdb.set_trace()
         # zero = self.rpe_transform(self.get_zero().to(x))
         # pos = self.rpe_transform(self.get_pos(n - 1).to(x))
+<<<<<<< HEAD
         fft_size = 2 * n
+=======
+        fft_size = 2*n
+>>>>>>> 4d58c6bfcfaf5b1762a920c7db0f387ecd1d081d
         pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
 
         # if self.use_decay or self.use_multi_decay:
@@ -152,7 +164,11 @@ class TnoFD(nn.Module):
         #         gamma = torch.sigmoid(self.gamma)
         #         gamma = self.lambda_ + (1 - self.lambda_) * gamma
         #     gamma = gamma**coef
+<<<<<<< HEAD
         # pos = gamma * pos
+=======
+            # pos = gamma * pos
+>>>>>>> 4d58c6bfcfaf5b1762a920c7db0f387ecd1d081d
         # a = torch.cat([zero, pos, zero], dim=1)
 
         a = self.act_fun(pos_w)
@@ -170,6 +186,10 @@ class TnoFD(nn.Module):
         return output
 
     def forward_non_causal(self, x, dim=-2, normalize=False):
+<<<<<<< HEAD
+=======
+        # import ipdb; ipdb.set_trace()
+>>>>>>> 4d58c6bfcfaf5b1762a920c7db0f387ecd1d081d
         # x: b, h, n, d
         n = x.shape[dim]
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
@@ -177,10 +197,17 @@ class TnoFD(nn.Module):
         # 1, d, 1 -> h, 1, d
         # zero = self.rpe_transform(self.get_zero().to(x))
         # pos = self.rpe_transform(self.get_pos(n - 1).to(x))
+<<<<<<< HEAD
 
         # neg_index = self.get_neg(n - 1).to(x)
 
         fft_size = 2 * n
+=======
+        
+        # neg_index = self.get_neg(n - 1).to(x)
+
+        fft_size = 2*n
+>>>>>>> 4d58c6bfcfaf5b1762a920c7db0f387ecd1d081d
         pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
 
         # if self.causal:

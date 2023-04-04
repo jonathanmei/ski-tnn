@@ -21,7 +21,10 @@ from fairseq.modules.transformer_sentence_encoder import init_bert_params
 
 from .xformer import LaxtnnEncoder
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 4d58c6bfcfaf5b1762a920c7db0f387ecd1d081d
 class LaxTnnRobertaEncoder(RobertaEncoder):
     """RoBERTa encoder."""
 
