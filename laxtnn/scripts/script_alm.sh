@@ -1,7 +1,7 @@
 #! /usr/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-# arch=laxtnn_decay_99_pre
+# arch=laxtnn_alm_baseline
 arch=laxtnn_alm_tno_fd
 # change to your data dir
 data_dir=data-bin/wikitext-103

@@ -21,10 +21,7 @@ from fairseq.modules.transformer_sentence_encoder import init_bert_params
 
 from .xformer import LaxtnnEncoder
 
-<<<<<<< HEAD
 
-=======
->>>>>>> 4d58c6bfcfaf5b1762a920c7db0f387ecd1d081d
 class LaxTnnRobertaEncoder(RobertaEncoder):
     """RoBERTa encoder."""
 
@@ -106,7 +103,7 @@ def laxtnn_blm_decay_99(args):
 
 
 @register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd")
-def laxtnn_blm_decay_99(args):
+def laxtnn_blm_tno_fd(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True

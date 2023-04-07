@@ -102,8 +102,8 @@ def laxtnn_no_decay(args):
     args.glu_dim = args.decoder_embed_dim
 
 
-@register_model_architecture("laxtnn_lm", "laxtnn_decay_99_pre")
-def laxtnn_decay_99_pre(args):
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_baseline")
+def laxtnn_alm_baseline(args):
     base_lm_architecture(args)
     args.decoder_normalize_before = True
     # model
@@ -113,7 +113,7 @@ def laxtnn_decay_99_pre(args):
     args.no_token_positional_embeddings = True
     # gtu
     args.act_fun = "silu"
-    args.causal = False
+    args.causal = True
     args.expand_ratio = 3
     args.use_norm = False
     args.norm_type = "simplermsnorm"
@@ -130,7 +130,7 @@ def laxtnn_decay_99_pre(args):
 
 
 @register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd")
-def laxtnn_decay_99_pre(args):
+def laxtnn_alm_tno_fd(args):
     base_lm_architecture(args)
     args.decoder_normalize_before = True
     # model
