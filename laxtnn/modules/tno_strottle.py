@@ -6,9 +6,15 @@ from einops import rearrange
 from fairseq.modules.helpers import get_activation_fn, print_params
 
 from .rpe import Rpe
+from .strottle import (
+    DepthWiseStridedConvDecoder,
+    DepthWiseStridedConvEncoder,
+    MultiChannelLinear,
+    Strottleneck,
+)
 
 
-class Tno(nn.Module):
+class TnoStrottle(nn.Module):
     def __init__(
         self,
         h,
@@ -25,6 +31,7 @@ class Tno(nn.Module):
         act_type="none",
         layers=3,
         norm_type="simplermsnorm",
+        strottle_cfg={},
     ):
         super().__init__()
         # get local varables
@@ -57,14 +64,64 @@ class Tno(nn.Module):
             norm_type=norm_type,
         )
 
-        self.forward_tno = self.forward_causal if causal else self.forward_non_causal
-
-        # if self.causal:
-        #     self.forward = self.forward_causal
-        # else:
-        #     self.forward = self.forward_non_causal
+        if self.causal:
+            self.forward = self.forward_causal
+        else:
+            self.forward = self.forward_non_causal
 
         self.act_fun = get_activation_fn(act_type)
+        self.strottle_cfg = strottle_cfg
+        cfg = strottle_cfg
+        # import ipdb
+        spike_len = cfg["spike_len"]
+        self.spike_len = spike_len
+        if spike_len > 0:
+            self.spike_pad = nn.ConstantPad1d([spike_len - 1, 0], 0.0)
+            self.spike = nn.Conv1d(
+                dim,
+                dim,
+                kernel_size=spike_len,
+                stride=1,
+                groups=dim,
+            )
+
+        # ipdb.set_trace()
+        encoder = DepthWiseStridedConvEncoder(
+            emb_len=dim,
+            kernel_sizes=cfg["kernel_sizes"],
+            strides=cfg["strides"],
+            act_fn=cfg["act_fn"],
+            out_fn=cfg["enc_out_fn"],
+        )
+
+        decoder = DepthWiseStridedConvDecoder(
+            emb_len=dim,
+            kernel_sizes=cfg["kernel_sizes"],
+            strides=cfg["strides"],
+            act_fn=cfg["act_fn"],
+            out_fn=cfg["dec_out_fn"],
+        )
+
+        seq_len = 512
+        latent_dim = encoder.predict_output_len(seq_len)
+
+        if cfg["latent_net"] == "linear":
+            latent_net = MultiChannelLinear(
+                num_chs=dim,
+                in_features=latent_dim,
+                out_features=latent_dim,
+            )
+        elif cfg["latent_net"] is None:
+            latent_net = None
+        else:
+            raise ValueError("latent_net not supported")
+
+        self.strottleneck = Strottleneck(
+            encoder=encoder,
+            decoder=decoder,
+            latent_net=latent_net,
+            unet_connections=cfg["unet_connections"],
+        )
 
     def get_pos(self, n):
         if self.par_type == 1:
@@ -105,50 +162,54 @@ class Tno(nn.Module):
 
         return res
 
-    def forward(self, *args, **kwargs):
-        return self.forward_tno(*args, **kwargs)
-
     def forward_causal(self, x, dim=-2, normalize=False):
-        # import ipdb; ipdb.set_trace()
 
         # x: b, h, n, d
         n = x.shape[dim]
+
+        x = x.squeeze(1).transpose(2, 1)
+        output = self.strottleneck(x)
+        if self.spike_len:
+            output += self.spike(self.spike_pad(x))
+
+        output = output.transpose(2, 1).unsqueeze(1)
+
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
         ##### coef
         # 1, d, 1 -> h, 1, d
 
         # import ipdb; ipdb.set_trace()
-        zero = self.rpe_transform(self.get_zero().to(x))
-        pos = self.rpe_transform(self.get_pos(n - 1).to(x))
+        # zero = self.rpe_transform(self.get_zero().to(x))
+        # pos = self.rpe_transform(self.get_pos(n - 1).to(x))
 
-        if self.use_decay or self.use_multi_decay:
-            coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
-            if self.use_decay:
-                gamma = self.gamma
-            else:
-                gamma = torch.sigmoid(self.gamma)
-                gamma = self.lambda_ + (1 - self.lambda_) * gamma
-            gamma = gamma**coef
-            pos = gamma * pos
-        a = torch.cat([zero, pos, zero], dim=1)
-        a = self.act_fun(a)
+        # if self.use_decay or self.use_multi_decay:
+        #     coef = torch.arange(1, n).reshape(1, -1, 1).to(x)
+        #     if self.use_decay:
+        #         gamma = self.gamma
+        #     else:
+        #         gamma = torch.sigmoid(self.gamma)
+        #         gamma = self.lambda_ + (1 - self.lambda_) * gamma
+        #     gamma = gamma**coef
+        #     pos = gamma * pos
+        # a = torch.cat([zero, pos, zero], dim=1)
+        # a = self.act_fun(a)
 
         # x: b, h, n, d
         # a: h, l, d
-        output = self.compute(x, a, dim, n)
+        # output = self.compute(x, a, dim, n)
 
-        if normalize:
-            size = list(x.shape[:-1]) + [1]
-            ones = torch.ones(size).to(x)
-            denorm = self.compute(ones, a, dim, n)
-            output = output / denorm
+        # if normalize:
+        #     size = list(x.shape[:-1]) + [1]
+        #     ones = torch.ones(size).to(x)
+        #     denorm = self.compute(ones, a, dim, n)
+        #     output = output / denorm
 
         return output
 
     def forward_non_causal(self, x, dim=-2, normalize=False):
-        import ipdb
+        # import ipdb
 
-        ipdb.set_trace()
+        # ipdb.set_trace()
         # x: b, h, n, d
         n = x.shape[dim]
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)
