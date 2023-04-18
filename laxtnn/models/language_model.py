@@ -96,6 +96,8 @@ def laxtnn_no_decay(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim
+    # lax
+    args.tno_type = 'tno'
 
 @register_model_architecture("laxtnn_lm", "laxtnn_decay_99_pre")
 def laxtnn_decay_99_pre(args):
@@ -117,6 +119,121 @@ def laxtnn_decay_99_pre(args):
     # rpe
     args.rpe_embedding = 64
     args.rpe_layers = 6
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # lax
+    args.tno_type = 'tno'
+
+################ begin llf: changing `rank` and `nk`
+@register_model_architecture("laxtnn_lm", "laxtnn_sns_laplace")
+def laxtnn_sns_laplace(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # lax
+    args.tno_type = 'llftno'
+    args.rank = 32
+    args.nk = 49
+    args.laplace = True
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+
+@register_model_architecture("laxtnn_lm", "laxtnn_sns_laplace_small")
+def laxtnn_sns_laplace_small(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # lax
+    args.tno_type = 'llftno'
+    args.rank = 8
+    args.nk = 9
+    args.laplace = True
+    args.fft_bw = True  # experiment with FFT for training
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+
+
+@register_model_architecture("laxtnn_lm", "laxtnn_sns_tiny")
+def laxtnn_sns_tiny(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # lax
+    args.tno_type = 'llftno'
+    args.rank = 4
+    args.nk = 7
+    args.laplace = False
+    args.fft_bw = True  # experiment with FFT for training
+
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+################# end llf
+
+@register_model_architecture("laxtnn_lm", "ski_alm_tiny")
+def ski_alm_tiny(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # ski
+    args.tno_type = 'skitno'
+    args.rank = 16
+    args.nk = 7
+    # rpe
+    args.rpe_embedding = 32
+    args.rpe_layers = 5
     args.residual = False
     # glu
     args.glu_act = "silu"

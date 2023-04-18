@@ -85,6 +85,8 @@ class LaxtnnEncoderLayer(nn.Module):
             residual=getattr(args, "residual", False),
             gamma=getattr(args, "gamma", 0.99),
             act_type=getattr(args, "act_type", "none"),
+            # lax
+            args=args,
         )
         
     def residual_connection(self, x, residual):
@@ -257,6 +259,8 @@ class LaxtnnDecoderLayer(nn.Module):
             residual=getattr(args, "residual", False),
             gamma=getattr(args, "gamma", 0.99),
             act_type=getattr(args, "act_type", "none"),
+            # lax
+            args=args,
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -289,6 +293,8 @@ class LaxtnnDecoderLayer(nn.Module):
             residual=getattr(args, "residual", False),
             gamma=getattr(args, "gamma", 0.99),
             act_type=getattr(args, "act_type", "none"),
+            # lax
+            args=args,
         )
         
     def prepare_for_onnx_export_(self):

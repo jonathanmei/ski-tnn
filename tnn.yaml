@@ -48,6 +48,7 @@ dependencies:
     - portalocker==2.5.1
     - pycparser==2.21
     - pyparsing==3.0.9
+    - pytorch-fast-transformers==0.4.0
     - pyyaml==6.0
     - regex==2022.9.13
     - requests==2.27.1

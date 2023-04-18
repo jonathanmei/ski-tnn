@@ -4,7 +4,7 @@ import time
 
 # change
 gtu_use_decay = True
-PREFIX = "your path to lra"
+PREFIX = "./lra"
 
 batches = {
     "cifar": 200,
@@ -15,14 +15,26 @@ batches = {
     "aan": 64,
 }
 
+# gpus = {
+#     "cifar": 4,
+#     "imdb": 2,
+#     "listops": 2,
+#     "pathfinder": 4,
+#     "pathfinderx": 8,
+#     "aan": 2,
+# }
+#norm = 'synbatch'
+
+## jmei small test:
 gpus = {
-    "cifar": 4,
-    "imdb": 2,
-    "listops": 2,
-    "pathfinder": 4,
-    "pathfinderx": 8,
-    "aan": 2,
+    "cifar": 1,
+    "imdb": 1,
+    "listops": 1,
+    "pathfinder": 1,
+    "pathfinderx": 1,
+    "aan": 1,
 }
+norm = 'batch'
 
 d_model_dict = {
     "cifar": 128,
@@ -70,12 +82,12 @@ gtu_gamma = {
 }
 
 norm_dict = {
-    "cifar": "synbatch",
-    "imdb": "synbatch",
-    "listops": "synbatch",
-    "pathfinder": "synbatch",
-    "pathfinderx": "synbatch",
-    "aan": "synbatch",
+    "cifar": norm,
+    "imdb": norm,
+    "listops": norm,
+    "pathfinder": norm,
+    "pathfinderx": norm,
+    "aan": norm,
 }
 
 lr_dict = {
@@ -236,7 +248,7 @@ for i, task in enumerate(tasks):
             seq_len = 4096
             if not gtu_use_decay:
                 os.system(
-                    f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                    f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                 )
                 sys.exit(0)
             else:
@@ -249,14 +261,14 @@ for i, task in enumerate(tasks):
                     pid = os.fork()
                     if pid == 0:
                         os.system(
-                            f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                            f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                         )
                         sys.exit(0)
         elif task == "cifar":
             seq_len = 1024
             if not gtu_use_decay:
                 os.system(
-                    f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu}"
+                    f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu}"
                 )
                 sys.exit(0)
             else:
@@ -268,14 +280,14 @@ for i, task in enumerate(tasks):
                 pid = os.fork()
                 if pid == 0:
                     os.system(
-                        f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                        f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                     )
                     sys.exit(0)
         elif task == "listops":
             seq_len = 2048
             if not gtu_use_decay:
                 os.system(
-                    f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu}"
+                    f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu}"
                 )
                 sys.exit(0)
             else:
@@ -287,7 +299,7 @@ for i, task in enumerate(tasks):
                 pid = os.fork()
                 if pid == 0:
                     os.system(
-                        f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                        f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                     )
                     sys.exit(0)
         elif task == "pathfinder":
@@ -298,7 +310,7 @@ for i, task in enumerate(tasks):
                 pid = os.fork()
                 if pid == 0:
                     os.system(
-                        f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                        f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                     )
                     sys.exit(0)
             else:
@@ -310,7 +322,7 @@ for i, task in enumerate(tasks):
                 pid = os.fork()
                 if pid == 0:
                     os.system(
-                        f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                        f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                     )
                     sys.exit(0)
         elif task == "pathfinderx":
@@ -321,7 +333,7 @@ for i, task in enumerate(tasks):
                 pid = os.fork()
                 if pid == 0:
                     os.system(
-                        f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu}"
+                        f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu}"
                     )
                     sys.exit(0)
             else:
@@ -333,14 +345,14 @@ for i, task in enumerate(tasks):
                 pid = os.fork()
                 if pid == 0:
                     os.system(
-                        f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                        f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                     )
                     sys.exit(0)
         elif task == "aan":
             seq_len = 4000
             if not gtu_use_decay:
                 os.system(
-                    f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                    f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} 0 {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                 )
                 sys.exit(0)
             else:
@@ -352,6 +364,6 @@ for i, task in enumerate(tasks):
                 pid = os.fork()
                 if pid == 0:
                     os.system(
-                        f"sh {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
+                        f"bash {PREFIX}/run_task.sh {task} {arch} {batch} {n_layers} {d_model} {gtu_dpb_dim} {norm} {expand_ratio_gtu} {expand_ratio_glu} {gtu_use_decay} {gamma} {lr} {wd} {gpu} {workers} {dropout} {dpb_type} {dpb_layers} {prenorm} {warmup_steps}"
                     )
                     sys.exit(0)
