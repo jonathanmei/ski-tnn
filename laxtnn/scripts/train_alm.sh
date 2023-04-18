@@ -1,4 +1,5 @@
 #! /usr/bin/bash
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 BATCH_SIZE=8
 TOKENS_PER_SAMPLE=512
@@ -14,10 +15,16 @@ echo $PORT
 LR=0.0005
 CLIP_NORM=1.0
 decay=0.2
+if [ "$5" = true ]; then
+    task=profiled_language_modeling
+else
+    task=language_modeling
+fi
 
-fairseq-train --task language_modeling \
+fairseq-train --task $task \
     $DATA_DIR \
-    --user-dir laxtnn \
+    --user-dir ${SCRIPT_DIR}/.. \
+    --wandb-project $4 \
     --save-dir checkpoints/$prefix/${ARCH} \
     --distributed-world-size $1  --distributed-port $PORT \
     --arch $ARCH --share-decoder-input-output-embed \

@@ -6,6 +6,7 @@ from einops import rearrange
 from fairseq.modules.helpers import get_activation_fn, print_params
 from .rpe import Rpe
 
+from ..utils.profiling import pytorch_profile
 
 class Tno(nn.Module):
     def __init__(
@@ -127,9 +128,8 @@ class Tno(nn.Module):
             ones = torch.ones(size).to(x)
             denorm = self.compute(ones, a, dim, n)
             output = output / denorm
-
         return output
-        
+
     def forward_non_causal(self, x, dim=-2, normalize=False):
         # x: b, h, n, d
         n = x.shape[dim]
