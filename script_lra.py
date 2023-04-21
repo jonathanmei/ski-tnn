@@ -4,7 +4,7 @@ import time
 
 # change
 gtu_use_decay = True
-PREFIX = "./lra"
+PREFIX = "./lra-tnn"
 
 batches = {
     "cifar": 200,
@@ -33,6 +33,14 @@ gpus = {
     "pathfinder": 1,
     "pathfinderx": 1,
     "aan": 1,
+}
+batches = {
+    "cifar": 50,
+    "imdb": 16,
+    "listops": 64,
+    "pathfinder": 32,
+    "pathfinderx": 8,
+    "aan": 32,
 }
 norm = 'batch'
 

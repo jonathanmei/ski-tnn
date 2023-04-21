@@ -83,7 +83,6 @@ dependencies:
     - pynvml==11.4.1
     - pyparsing==3.0.9
     - python-dateutil==2.8.2
-    - pytorch-fast-transformers==0.4.0
     - pytorch-lightning==1.5.10
     - pytz==2022.1
     - pyyaml==6.0
