@@ -11,9 +11,24 @@ cd fairseq-tnn
 git submodule update --init
 ```
 
+Set up environments:
+```
+conda env create --file lra.yaml && conda env update --name lra --file lra2.yaml
+conda env create --file tnn.yaml && conda env update --name tnn --file tnn2.yaml
+```
+
+In environment `tnn`:
 Linear Approximation to be found in `laxtnn/`. Run via
 ```
 bash laxtnn/scripts/script_alm.sh
+bash laxtnn/scripts/script_blm.sh
+```
+
+In environment `lra`:
+Put `lra_release/` in same dir as `tnn`
+Run via
+```
+python script_lra.py
 ```
 
 ---
