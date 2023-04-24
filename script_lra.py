@@ -4,7 +4,7 @@ import time
 
 # change
 gtu_use_decay = True
-PREFIX = "your path to lra"
+PREFIX = "/home/ubuntu/luke/tnn"
 
 batches = {
     "cifar": 200,

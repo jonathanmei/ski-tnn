@@ -1,5 +1,6 @@
 
 # *** assumes our fork of tnn is on machine and current directory is ./tnn/ ***
+# run as:  source setup.sh
 
 #install conda
 wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh

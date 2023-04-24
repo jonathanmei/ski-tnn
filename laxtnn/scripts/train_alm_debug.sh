@@ -14,7 +14,6 @@ echo $PORT
 LR=0.0005
 CLIP_NORM=1.0
 decay=0.2
-WANDB_PROJECT=tnn-fd
 
 fairseq-train --task language_modeling \
     $DATA_DIR \
@@ -31,6 +30,4 @@ fairseq-train --task language_modeling \
     --batch-size $BATCH_SIZE \
     --max-update $MAX_UPDATE \
     --log-interval 10 \
-    --wandb-project $WANDB_PROJECT \
-    --seed 1000 \
      2>&1 | tee $ARCH.log \

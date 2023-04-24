@@ -57,10 +57,12 @@ class Tno(nn.Module):
             norm_type=norm_type,
         )
 
-        if self.causal:
-            self.forward = self.forward_causal
-        else:
-            self.forward = self.forward_non_causal
+        self.forward_tno = self.forward_causal if causal else self.forward_non_causal
+
+        # if self.causal:
+        #     self.forward = self.forward_causal
+        # else:
+        #     self.forward = self.forward_non_causal
 
         self.act_fun = get_activation_fn(act_type)
 
@@ -103,6 +105,9 @@ class Tno(nn.Module):
 
         return res
 
+    def forward(self, *args, **kwargs):
+        return self.forward_tno(*args, **kwargs)
+
     def forward_causal(self, x, dim=-2, normalize=False):
         # import ipdb; ipdb.set_trace()
 
@@ -141,7 +146,9 @@ class Tno(nn.Module):
         return output
 
     def forward_non_causal(self, x, dim=-2, normalize=False):
-        import ipdb; ipdb.set_trace()
+        import ipdb
+
+        ipdb.set_trace()
         # x: b, h, n, d
         n = x.shape[dim]
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)

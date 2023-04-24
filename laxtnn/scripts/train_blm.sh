@@ -18,7 +18,7 @@ WANDB_PROJECT=tnn-fd
 fairseq-train $DATA_DIR \
     --user-dir laxtnn \
     --task masked_lm --criterion masked_lm \
-    --distributed-world-size $1  --distributed-port $PORT \
+    --distributed-world-size $GPUS  --distributed-port $PORT \
     --save-dir checkpoints/$prefix/$ARCH \
     --arch $ARCH --sample-break-mode complete --tokens-per-sample $TOKENS_PER_SAMPLE \
     --optimizer adam --adam-betas '(0.9,0.98)' --adam-eps 1e-6 --clip-norm $CLIP_NORM \

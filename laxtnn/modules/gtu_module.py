@@ -2,10 +2,11 @@ from typing import Dict, Optional, Tuple
 
 import torch
 from fairseq.incremental_decoding_utils import with_incremental_state
-from torch import Tensor, nn
 
 # from custom fairseq
 from fairseq.modules.helpers import print_params
+from torch import Tensor, nn
+
 from .gtu import Gtu
 
 
@@ -43,13 +44,17 @@ class GtuModule(nn.Module):
         gamma=0.999,
         act_type="none",
         tno_fd=False,
+        tno_spike=False,
+        spike_len=32,
+        strottle=False,
+        strottle_cfg={},
     ):
         super().__init__()
         # get local varables
         params = locals()
         # print params
         print_params(**params)
-        
+
         self.gtu = Gtu(
             embed_dim=embed_dim,
             num_heads=num_heads,
@@ -71,6 +76,10 @@ class GtuModule(nn.Module):
             gamma=gamma,
             act_type=act_type,
             tno_fd=tno_fd,
+            tno_spike=tno_spike,
+            spike_len=spike_len,
+            strottle=strottle,
+            strottle_cfg=strottle_cfg,
         )
 
     def prepare_for_onnx_export_(self):
@@ -110,7 +119,7 @@ class GtuModule(nn.Module):
         x = query.transpose(0, 1)
         # b n e -> b n e -> n b e
         output = self.gtu(x).transpose(0, 1)
-        
+
         return output, None
 
     @staticmethod

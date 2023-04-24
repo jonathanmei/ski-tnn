@@ -61,35 +61,22 @@ class DepthWiseStridedConvEncoder(nn.Module):
     def __init__(
         self,
         emb_len: int,
-        seq_len: int,
         kernel_sizes: List[int] = None,
         strides: List[int] = None,
         act_fn: Callable[[Tensor], Tensor] = nn.ReLU(),
         out_fn: Optional[Callable[[Tensor], Tensor]] = None,
-        target_latent_len: int = None,
     ):
         super(DepthWiseStridedConvEncoder, self).__init__()
         self.emb_len = emb_len
-        self.seq_len = seq_len
         self.act_fn = act_fn
         self.out_fn = out_fn
 
         # arg checking
-        assert (target_latent_len is None) != (
-            kernel_sizes is None
-        ), "Cannot specific kernel_sizes when setting target_latent_len. It's either or."
-
-        if target_latent_len is None:
-            strides = strides or kernel_sizes
-            strides = strides * len(kernel_sizes) if len(strides) == 1 else strides
-            assert len(strides) == len(
-                kernel_sizes
-            ), "strides and kernel_sizes lengths are incompatible."
-            num_layers = len(kernel_sizes)
-        else:
-            num_layers = round(np.log2(seq_len) - np.log2(target_latent_len))
-            kernel_sizes = [2] * num_layers
-            strides = [2] * num_layers
+        strides = strides or kernel_sizes
+        strides = strides * len(kernel_sizes) if len(strides) == 1 else strides
+        assert len(strides) == len(
+            kernel_sizes
+        ), "strides and kernel_sizes lengths are incompatible."
 
         self.kernel_sizes = kernel_sizes
         self.strides = strides
@@ -107,15 +94,12 @@ class DepthWiseStridedConvEncoder(nn.Module):
             ]
         )
 
+    def predict_output_len(self, seq_len: int):
         out_len = copy.deepcopy(seq_len)
-        for k, s in zip(kernel_sizes, strides):
+        for k, s in zip(self.kernel_sizes, self.strides):
             out_len = int(np.floor((out_len - (k - 1) - 1) / s + 1))
 
-        assert (
-            out_len > 1
-        ), f"kernel_sizes and strides result in latent dimension {out_len}"
-
-        self.latent_len = out_len
+        return out_len
 
     def forward(self, x, return_activations=False):
         activations = []
@@ -136,7 +120,6 @@ class DepthWiseStridedConvDecoder(nn.Module):
     def __init__(
         self,
         emb_len: int,
-        latent_len: int,
         kernel_sizes: List[int] = None,
         strides: List[int] = None,
         act_fn: Callable[[Tensor], Tensor] = nn.ReLU(),
@@ -145,7 +128,6 @@ class DepthWiseStridedConvDecoder(nn.Module):
         super(DepthWiseStridedConvDecoder, self).__init__()
 
         self.emb_len = emb_len
-        self.latent_len = latent_len
         self.act_fn = act_fn
         self.out_fn = out_fn
 

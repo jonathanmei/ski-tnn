@@ -6,6 +6,7 @@ import torch.nn as nn
 
 # from custom fairseq
 from fairseq.modules.helpers import get_norm_fn, logging_info
+
 from .glu import GLU
 from .gtu_module import GtuModule
 
@@ -18,16 +19,16 @@ class LaxtnnSentenceEncoderLayer(nn.Module):
         super().__init__()
         # Initialize parameters
         self.embed_dim = args.encoder_embed_dim
-        self.quant_noise = getattr(args, 'quant_noise_pq', 0)
-        self.quant_noise_block_size = getattr(args, 'quant_noise_pq_block_size', 8) or 8
-        
+        self.quant_noise = getattr(args, "quant_noise_pq", 0)
+        self.quant_noise_block_size = getattr(args, "quant_noise_pq_block_size", 8) or 8
+
         # Initialize blocks
         self.self_attn = self.build_self_attention(
             self.embed_dim,
             args,
         )
 
-        norm_type = getattr(args, 'norm_type', 'layernorm')
+        norm_type = getattr(args, "norm_type", "layernorm")
         logging_info(f"Sentence Encoder Norm Type: {norm_type}")
         self.self_attn_layer_norm = get_norm_fn(norm_type)(self.embed_dim)
 
@@ -42,7 +43,14 @@ class LaxtnnSentenceEncoderLayer(nn.Module):
             self.glu_dim = self.embed_dim
         # bias
         bias = getattr(args, "bias", True)
-        self.glu = GLU(self.embed_dim, self.glu_dim, self.glu_act, self.fina_act, self.glu_dropout, bias)
+        self.glu = GLU(
+            self.embed_dim,
+            self.glu_dim,
+            self.glu_act,
+            self.fina_act,
+            self.glu_dropout,
+            bias,
+        )
 
         self.final_layer_norm = get_norm_fn(norm_type)(self.embed_dim)
 
@@ -76,8 +84,12 @@ class LaxtnnSentenceEncoderLayer(nn.Module):
             gamma=getattr(args, "gamma", 0.99),
             act_type=getattr(args, "act_type", "none"),
             tno_fd=getattr(args, "tno_fd", False),
+            tno_spike=getattr(args, "tno_spike", False),
+            spike_len=getattr(args, "spike_len", 32),
+            strottle=getattr(args, "strottle", False),
+            strottle_cfg=getattr(args, "strottle_cfg", {}),
         )
-        
+
     def residual_connection(self, x, residual):
         return residual + x
 
