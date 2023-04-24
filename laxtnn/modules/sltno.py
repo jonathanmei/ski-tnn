@@ -55,6 +55,7 @@ class Sltno(nn.Module):
         self.causal = causal
         self.par_type = par_type
         self.nk2 = self.nk // 2
+        self.register_buffer('gamma', torch.Tensor([gamma]))
         self.conv_kernel = nn.Parameter(torch.randn(h * dim, self.nk2+1 if self.causal else self.nk))
 
     def get_pos(self, n, absolute=False, device='cuda'):

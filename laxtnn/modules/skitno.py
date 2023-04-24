@@ -20,7 +20,6 @@ class SKITno(Sltno):
         layers = kwargs.get('layers', 3)
         norm_type = kwargs.get('norm_type', 'simplermsnorm')
         act_type = kwargs.get('act_type', 'none')
-        gamma = torch.Tensor([kwargs.get('gamma', 0.99)])
         self.rpe = Rpe(
             dim=rpe_dim, 
             outdim=h * dim, 
@@ -32,8 +31,6 @@ class SKITno(Sltno):
         )
         self.act_fun = get_activation_fn(act_type)
         self.register_buffer('inducing', torch.linspace(0, 1, r))
-        # falloff
-        self.register_buffer('gamma', gamma)
 
     def gen_low_rank_U(self, t):
         n, _ = t.shape
@@ -98,6 +95,7 @@ class SKITno(Sltno):
         pos = torch.nn.functional.interpolate(pos, (n, -1), mode='cubic', align_corners=True)  # (n, hd)
 
         a = self.act_fun(pos).transpose(0, 1)  # (hd, n)
+        a = a * (self.gamma ** torch.arange(n, device=x.device))
         a[:, :self.nk] += self.conv_kernel
         S = ToepMat(a, n)
         x = x.transpose(-1, -2)[..., None]  # (b, hd, n, 1)
