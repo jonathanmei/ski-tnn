@@ -62,12 +62,15 @@ class Llftno(Sltno):
         else:
             self.falloff_omega = nn.Parameter(PI)  # [0, pi)
 
-    def apply_low_rank(self, x, t, causal=False, **unused_kwargs):
+    def apply_low_rank(self, x, **unused_kwargs):
         """
+        non-causal
+
         x `torch.Tensor` (b, n, hd): sequences of tokens
-        t `torch.Tensor` (n, 1): relative position indices
         have access to self.r for the rank
         """
+        _, n, _ = x.shape
+        t = self.gen_pos(n, absolute=True, device=x.device)
         U, S = self.gen_low_rank_US(t)  # (hd, n or r, r)
 
         # falloff

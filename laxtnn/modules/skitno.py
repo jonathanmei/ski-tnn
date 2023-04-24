@@ -1,11 +1,10 @@
 import torch
 
 # from custom fairseq
-from fairseq.modules.helpers import get_activation_fn, print_params
+from fairseq.modules.helpers import get_activation_fn
 
 from .rpe import Rpe
 from .sltno import Sltno
-from ..utils.causal_product import causal_product_trio_toep
 from ..utils.toep_mat import ToepMat
 
 class SKITno(Sltno):
@@ -32,7 +31,7 @@ class SKITno(Sltno):
             norm_type=norm_type,
         )
         self.act_fun = get_activation_fn(act_type)
-        self.register_buffer('inducing', torch.linspace(0, 1-1/r, r))
+        self.register_buffer('inducing', torch.linspace(0, 1, r))
         # falloff
         self.register_buffer('gamma', gamma)
 
@@ -43,13 +42,13 @@ class SKITno(Sltno):
         original_loc = t[..., 0]  # (n, )
 
         # get largest point in the inducing < the original location
-        # TODO: closed form since it's all uniform (not super important)
-        indices = torch.searchsorted(self.inducing, original_loc)
+        # TODO: closed form since it's all uniform? (not super important)
+        indices = torch.searchsorted(self.inducing*(n-1)/(self.r-1), original_loc)
         # should be unnecessary with side='left' above as default, but *shrug*
         indices.clamp_(min=0, max=self.inducing.shape[0]-2)
 
         #lerp weights: n
-        weights_l = (original_loc - self.inducing[indices]) * self.r
+        weights_l = (original_loc - self.inducing[indices])*(self.r-1)/(n-1)
         weights_u = 1 - weights_l
 
         # TODO: init as sparse (not super important, small matrix)
@@ -59,8 +58,12 @@ class SKITno(Sltno):
         W = falloff * W
         return W
 
-    def apply_low_rank(self, x, t):
+    def apply_low_rank(self, x):
+        """
+        non-causal
+        """
         b, n, hd = x.shape  # hd = num_heads*num_dims
+        t = self.get_pos(n, absolute=True, device=x.device)
 
         W = self.gen_low_rank_U(t)
 
@@ -72,20 +75,31 @@ class SKITno(Sltno):
         neg = self.rpe(-positions.flip(0))  # (r-1, hd)
         a = torch.cat([zero, pos, zero, neg], dim=0)  # (2r, hd)
         a = self.act_fun(a).transpose(0,1)  # (hd, 2r)
+        S = ToepMat(a, self.r) 
 
-        if self.causal:
-            output = causal_product_trio_toep(W, a, x.transpose(-1,-2))
-            output = output.transpose(-1,-2)  # (b, n, hd)
-        else:
-            # this one is still slow
-            x = x.transpose(0, 1).reshape((n, b*hd))  # (n, b*hd)
-            Wt = W.T
-            W = W.to_sparse()
-            Wt = Wt.to_sparse()  # (r, n)
-            S = ToepMat(a, self.r) 
-            # these `view` and `permute` required to use ToepMat aren't too expensive
-            output = torch.sparse.mm(Wt, x).view((self.r, b, hd)).permute((1,2,0))[..., None]  # (b, hd, r, 1)
-            output = (S @ output)[..., 0].permute((2,0,1)).view((self.r, b*hd))  # (r, b*hd)
-            output = torch.sparse.mm(W, output)  # (n, b*hd)
-            output = output.view((n, b, hd)).transpose(0, 1)  # (b, n, hd)
+        # this one is still slow
+        x = x.transpose(0, 1).reshape((n, b*hd))  # (n, b*hd)
+        Wt = W.T
+        W = W.to_sparse()
+        Wt = Wt.to_sparse()  # (r, n)
+        # these `view` and `permute` required to use ToepMat aren't too expensive
+        output = torch.sparse.mm(Wt, x).view((self.r, b, hd)).permute((1,2,0))[..., None]  # (b, hd, r, 1)
+        output = (S @ output)[..., 0].permute((2,0,1)).view((self.r, b*hd))  # (r, b*hd)
+        output = torch.sparse.mm(W, output)  # (n, b*hd)
+        output = output.view((n, b, hd)).transpose(0, 1)  # (b, n, hd)
         return output
+
+    def apply_toeplitz(self, x):
+        b, n, hd = x.shape  # hd = num_heads*num_dims
+        # build inducing kernel matrix
+        positions = self.inducing[..., None]*(n-1)  # (r, 1) 
+        pos = self.rpe(positions)  # (r, hd)
+        # apply interpolation
+        pos = torch.nn.functional.interpolate(pos, (n, -1), mode='cubic', align_corners=True)  # (n, hd)
+
+        a = self.act_fun(pos).transpose(0, 1)  # (hd, n)
+        a[:, :self.nk] += self.conv_kernel
+        S = ToepMat(a, n)
+        x = x.transpose(-1, -2)[..., None]  # (b, hd, n, 1)
+        out = (S @ x)[..., 0]  # (b, hd, n)
+        return out.transpose(-1, -2)

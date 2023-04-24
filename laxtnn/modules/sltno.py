@@ -7,9 +7,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 # from custom fairseq
-from fairseq.modules.helpers import get_activation_fn, print_params
+from fairseq.modules.helpers import print_params
 
-from .sl_toeplitz import causal_sl_toeplitz
 from ..utils.profiling import pytorch_profile
 DEFAULT_GAMMA = 0.999
 
@@ -21,7 +20,6 @@ class Sltno(nn.Module):
         r,
         nk,  # convolution kernel size (for causal model, half will be unused)
         causal=False, 
-        fft_bw=True,  # use the custom function for bw pass?
         use_decay=False, 
         use_multi_decay=False, 
         residual=False, 
@@ -55,17 +53,21 @@ class Sltno(nn.Module):
         odd = nk % 2
         self.nk = nk + 1 - odd
         self.causal = causal
-        self.fft_bw = fft_bw
         self.par_type = par_type
         self.nk2 = self.nk // 2
         self.conv_kernel = nn.Parameter(torch.randn(h * dim, self.nk2+1 if self.causal else self.nk))
 
-    def get_pos(self, n, device='cuda'):
+    def get_pos(self, n, absolute=False, device='cuda'):
         """
         get n uniformly spaced position indices in [0, 1)
+        note: absolute=True in the time domain performs better, but this can be seen
+            as interpolating in the freq domain, so we would want absolute=False for freq domain.
         """
-        index = torch.linspace(0, 1-1/n, n, device=device).reshape(n, -1)
-        return index
+        if absolute:
+            index = torch.linspace(0, n, n, device=device)
+        else:
+            index = torch.linspace(0, 1-1/n, n, device=device)
+        return index.reshape(n, 1)
 
     def compute(self, x):
         """
@@ -73,10 +75,13 @@ class Sltno(nn.Module):
         """
         n = x.shape[-2]
         output = torch.zeros_like(x)
-        if self.nk > 0:
-            output += self.apply_sparse(x)
-        if self.r > 0:
-            output += self.apply_low_rank(x, self.get_pos(n, device=x.device))
+        if self.causal:
+            output += self.apply_toeplitz(x)
+        else:
+            if self.nk > 0:
+                output += self.apply_sparse(x)
+            if self.r > 0:
+                output += self.apply_low_rank(x)
         return output
 
     def forward(self, x, dim=-2, normalize=False):
@@ -92,6 +97,9 @@ class Sltno(nn.Module):
         return output
 
     def apply_sparse(self, x):
+        """
+        non-causal
+        """
         # x: b, n, hd
         # kernel: hd, n_k
         hd = x.shape[-1]
@@ -103,15 +111,19 @@ class Sltno(nn.Module):
             padding=self.nk2,  # pytorch==1.8.1
             groups=hd
         )  # b, hd, n+nk2
-        if self.causal:
-            output = output[..., :-self.nk2]
         return output.transpose(1, 2)
 
-    def apply_low_rank(self, x, t):
+    def apply_low_rank(self, x):
         """
         Abstract
         Params:
             x `torch.Tensor` (b, n, hd): sequences of tokens
-            t `torch.Tensor` (n, 1): relative position indices
+        """
+        raise NotImplementedError
+
+    def apply_toeplitz(self, x):
+        """
+        Abstract
+            x `torch.Tensor` (b, n, hd): sequences of tokens
         """
         raise NotImplementedError
