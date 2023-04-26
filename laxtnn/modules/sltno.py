@@ -74,7 +74,6 @@ class Sltno(nn.Module):
         """
         x (b, n, hd)
         """
-        n = x.shape[-2]
         output = torch.zeros_like(x)
         if self.causal:
             output += self.apply_toeplitz(x)

@@ -40,7 +40,7 @@ class SKITno(Sltno):
 
         # get largest point in the inducing < the original location
         # TODO: closed form since it's all uniform? (not super important)
-        indices = torch.searchsorted(self.inducing*(n-1)/(self.r-1), original_loc)
+        indices = torch.searchsorted(self.inducing*(n-1), original_loc)
         # should be unnecessary with side='left' above as default, but *shrug*
         indices.clamp_(min=0, max=self.inducing.shape[0]-2)
 
@@ -91,12 +91,13 @@ class SKITno(Sltno):
         # build inducing kernel matrix
         positions = self.inducing[..., None]*(n-1)  # (r, 1) 
         pos = self.rpe(positions)  # (r, hd)
-        # apply interpolation
-        pos = torch.nn.functional.interpolate(pos, (n, -1), mode='cubic', align_corners=True)  # (n, hd)
+        # apply interpolation (need fake batch dim)
+        pos = pos[None].transpose(-1,-2) # (1, hd, r)
+        pos = torch.nn.functional.interpolate(pos, (n,), mode='linear', align_corners=True)[0]  # (hd, n)
 
-        a = self.act_fun(pos).transpose(0, 1)  # (hd, n)
+        a = self.act_fun(pos)  # (hd, n)
         a = a * (self.gamma ** torch.arange(n, device=x.device))
-        a[:, :self.nk] += self.conv_kernel
+        a[:, :self.nk2+1] += self.conv_kernel
         S = ToepMat(a, n)
         x = x.transpose(-1, -2)[..., None]  # (b, hd, n, 1)
         out = (S @ x)[..., 0]  # (b, hd, n)

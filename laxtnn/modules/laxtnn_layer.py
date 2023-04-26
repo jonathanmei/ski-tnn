@@ -373,7 +373,6 @@ class LaxtnnDecoderLayer(nn.Module):
             y = torch.cat((encoder_out, x), dim=0)
         else:
             y = x
-
         x, attn = self.self_attn(
             query=x,
             key=y,
@@ -383,7 +382,6 @@ class LaxtnnDecoderLayer(nn.Module):
             need_weights=False,
             attn_mask=self_attn_mask,
         )
-
         x = self.dropout_module(x)
 
         x = self.residual_connection(x, residual)

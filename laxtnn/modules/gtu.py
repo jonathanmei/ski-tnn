@@ -6,6 +6,7 @@ import torch.nn as nn
 from fairseq.modules.helpers import get_activation_fn, get_norm_fn
 
 from .tno import Tno  # Vanilla Toeplitz Neural Operator (TNO)
+from .tno_inv_time import TnoInvTime  # TNO with inverted time
 from .llftno import Llftno  # Learned Laplace Features (LLF) TNO
 from .skitno import SKITno  # Structured Kernel Interpolation (SKI) TNO
 
@@ -58,6 +59,23 @@ class Gtu(nn.Module):
         self.tno_type = args.tno_type
         if self.tno_type == 'tno':  # Vanilla Toeplitz Neural Operator (TNO)
             self.toep = Tno(
+                h=num_heads, 
+                dim=self.head_dim,
+                rpe_dim=rpe_embedding, 
+                causal=causal, 
+                use_decay=use_decay, 
+                use_multi_decay=use_multi_decay,
+                residual=residual,
+                act=rpe_act,
+                par_type=par_type,
+                gamma=gamma,
+                bias=bias,
+                act_type=act_type,
+                layers=rpe_layers,
+                norm_type=norm_type,
+            )
+        elif self.tno_type == 'tno_inv_time':  # TNO with inverted time
+            self.toep = TnoInvTime(
                 h=num_heads, 
                 dim=self.head_dim,
                 rpe_dim=rpe_embedding, 
@@ -136,7 +154,7 @@ class Gtu(nn.Module):
         u = self.act(self.u_proj(x))  # gating
         v = self.act(self.v_proj(x))  # (b, n, hd)  input to TNO
         # reshape
-        if self.tno_type == 'tno':  # Vanilla Toeplitz Neural Operator (TNO)
+        if self.tno_type == 'tno' or self.tno_type == 'tno_inv_time':  # Vanilla Toeplitz Neural Operator (TNO)
             v = rearrange(v, 'b n (h d) -> b h n d', h=num_heads)
             output = self.toep(v, dim=-2, normalize=self.normalize)
             output = rearrange(output, 'b h n d -> b n (h d)')

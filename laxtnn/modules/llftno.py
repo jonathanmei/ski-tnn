@@ -117,3 +117,6 @@ class Llftno(Sltno):
         S[ixs[3]] =  block03
         S[..., -1, -1] = self.alphas[..., -1]
         return U, S
+    
+    def apply_toeplitz(self, x):
+        return 0

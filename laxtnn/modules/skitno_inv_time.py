@@ -1,53 +1,32 @@
-import math 
-
 import torch
 from torch import nn
 
 # from custom fairseq
 from fairseq.modules.helpers import get_activation_fn
 
+from .rpe import Rpe
 from .sltno import Sltno
 from ..utils.toep_mat import ToepMat
 
-PI = torch.Tensor([math.pi])
-PI2 = 2 * PI
-
-class SKITnoFD(Sltno):
+class SKITno(Sltno):
     def __init__(self, h, dim, r, nk, **kwargs):
         """
-        SKI using LLF instead of RPE
         r: num inducing locations
         """
         super().__init__(h, dim, r, nk, **kwargs)
         hd = h*dim
-        # real part of fft
-        self.alphas = nn.Parameter(torch.randn((hd, r)))  # [-inf, inf]
-        if not self.causal:
-            # imaginary part of fft
-            self.betas = nn.Parameter(torch.randn((hd, r)))  # [-inf, inf]
+        # explicit interpolation grid to represent the interval [-1, 1]
+        self.alphas = nn.Parameter(torch.randn((1, hd, 1, r)))  # [-inf, inf]
         self.register_buffer('inducing', torch.linspace(0, 1, r))
-    
-    def rpe(self, n, fd=True):
+
+    def rpe(self, t):
         """
-        get interpolated coeffs for RPE in either frequency or time domain
+        t: (r, 1) values in in interval (0, infty)
         """
-        # fake batch dim
-        reals = torch.interpolate(self.alphas[None], (n,), mode='linear', align_corners=True)[0]
-        if self.causal:
-            irfft_real_part = torch.fft.irfft(reals, dim=1)
-            irfft_real_part[:, n:] = 0  # make it causal
-            irfft_real_part[:, 0] *= 0.5
-            if fd:
-                out = 2 * torch.fft.rfft(irfft_real_part, dim=1)
-            else:
-                out = 2 * irfft_real_part
-        else:
-            imags = torch.interpolate(self.betas[None], (n,), mode='linear', align_corners=True)[0]
-            imags[:, (0, -1)] = 0  # force DC and Nyquist to be real
-            out = torch.complex(reals, imags)
-            if not fd:
-                out = torch.rfft.irfft(out)
-        return out
+        t = 1 / t.transpose(-2, -1)[None]  # (1, 1, r)  fake batch and height dims
+        t = torch.stack([t, torch.zeros_like(t)], dim=-1)  # (1, 1, r, 2) == (n, h, w, 2)
+        # grid = self.alphas  # (1, hd, 1, r) == (n, c, h, w)
+        return nn.functional.grid_sample(t, self.alphas, align_corners=True)
 
     def gen_low_rank_U(self, t):
         n, _ = t.shape
