@@ -265,3 +265,28 @@ def tno_inv_time(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.decoder_embed_dim
+
+@register_model_architecture("laxtnn_lm", "skitno_inv_time")
+def skitno_inv_time(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # inverted time
+    args.rank = 32
+    args.nk = 16
+    args.tno_type = 'skitno_inv_time'
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim

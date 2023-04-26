@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from einops import rearrange
 
 import torch
@@ -9,6 +10,25 @@ from .tno import Tno  # Vanilla Toeplitz Neural Operator (TNO)
 from .tno_inv_time import TnoInvTime  # TNO with inverted time
 from .llftno import Llftno  # Learned Laplace Features (LLF) TNO
 from .skitno import SKITno  # Structured Kernel Interpolation (SKI) TNO
+from .skitno_inv_time import SKITnoInvTime
+
+@dataclass
+class TnoConfig:
+    h: int
+    dim: int
+    rpe_dim: str
+    causal: bool
+    use_decay: bool
+    use_multi_decay: bool
+    residual: bool
+    act: str
+    par_type: str
+    gamma: float
+    bias: bool
+    act_type: str
+    layers: int
+    norm_type: str
+
 
 class Gtu(nn.Module):
     def __init__(
@@ -57,89 +77,45 @@ class Gtu(nn.Module):
         # tno
         # lax
         self.tno_type = args.tno_type
+        config = TnoConfig(
+            h=num_heads, 
+            dim=self.head_dim,
+            rpe_dim=rpe_embedding, 
+            causal=causal, 
+            use_decay=use_decay, 
+            use_multi_decay=use_multi_decay,
+            residual=residual,
+            act=rpe_act,
+            par_type=par_type,
+            gamma=gamma,
+            bias=bias,
+            act_type=act_type,
+            layers=rpe_layers,
+            norm_type=norm_type,
+        )
         if self.tno_type == 'tno':  # Vanilla Toeplitz Neural Operator (TNO)
-            self.toep = Tno(
-                h=num_heads, 
-                dim=self.head_dim,
-                rpe_dim=rpe_embedding, 
-                causal=causal, 
-                use_decay=use_decay, 
-                use_multi_decay=use_multi_decay,
-                residual=residual,
-                act=rpe_act,
-                par_type=par_type,
-                gamma=gamma,
-                bias=bias,
-                act_type=act_type,
-                layers=rpe_layers,
-                norm_type=norm_type,
-            )
+            self.toep = Tno(**config)
         elif self.tno_type == 'tno_inv_time':  # TNO with inverted time
-            self.toep = TnoInvTime(
-                h=num_heads, 
-                dim=self.head_dim,
-                rpe_dim=rpe_embedding, 
-                causal=causal, 
-                use_decay=use_decay, 
-                use_multi_decay=use_multi_decay,
-                residual=residual,
-                act=rpe_act,
-                par_type=par_type,
-                gamma=gamma,
-                bias=bias,
-                act_type=act_type,
-                layers=rpe_layers,
-                norm_type=norm_type,
-            )
+            self.toep = TnoInvTime(**config)
         elif self.tno_type == 'skitno':  # Structured Kernel Interpolation (SKI) TNO
             self.rank = args.rank
             self.nk = args.nk
-            self.toep = SKITno(
-                h=num_heads, 
-                dim=self.head_dim,
-                r=self.rank,  # rank
-                nk=self.nk,  # conv kernel width
-                rpe_dim=rpe_embedding, 
-                causal=causal, 
-                use_decay=use_decay, 
-                use_multi_decay=use_multi_decay,
-                residual=residual,
-                act=rpe_act,
-                par_type=par_type,
-                gamma=gamma,
-                bias=bias,
-                act_type=act_type,
-                layers=rpe_layers,
-                norm_type=norm_type,
+            self.toep = SKITno(r=self.rank, nk=self.nk,  # conv kernel width
+                **config
+            )
+        elif self.tno_type == 'skitno_inv_time':
+            self.rank = args.rank
+            self.nk = args.nk
+            self.toep = SKITnoInvTime(r=self.rank, nk=self.nk,  # conv kernel width
+                **config
             )
         else:  # tno_type == 'llftno':  # Learned Laplace Features (LLF) TNO
             self.rank = args.rank
             self.nk = args.nk
-            """print(
-                '###############################\n'
-                'Using learned laplace features\n'
-                '###############################'
-            )"""
-            self.toep = Llftno(
-                h=num_heads, 
-                dim=self.head_dim,
-                r=self.rank,  # rank
-                nk=self.nk,  # conv kernel width
-                rpe_dim=rpe_embedding, 
-                causal=causal, 
-                fft_bw=self.fft_bw,
-                use_decay=use_decay, 
-                use_multi_decay=use_multi_decay,
-                residual=residual,
-                act=rpe_act,
-                par_type=par_type,
-                gamma=gamma,
-                bias=bias,
-                act_type=act_type,
-                layers=rpe_layers,
-                norm_type=norm_type,
+            self.toep = Llftno(r=self.rank, nk=self.nk,  # conv kernel width
                 # lax
                 laplace=args.laplace,
+                **config
             )
 
         # norm
