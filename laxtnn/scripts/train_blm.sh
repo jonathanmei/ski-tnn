@@ -1,13 +1,16 @@
 #! /usr/bin/bash
 #arch=laxtnn_blm_decay_99
-arch=laxtnn_blm_sns_tiny
-wandb="spikes-n-sines-bidirectional"
+#arch=laxtnn_blm_sns_tiny
+#wandb="spikes-n-sines-bidirectional"
 
 #arch=ski_blm_tiny
 #wandb="ski-bidirectional"
 
-#TOKENS_PER_SAMPLE=512  # Max sequence length
-TOKENS_PER_SAMPLE=2048  # Max sequence length
+arch=ski_blm_inv_time
+wandb="mlp-free-bidirectional"
+
+TOKENS_PER_SAMPLE=512  # Max sequence length
+#TOKENS_PER_SAMPLE=2048  # Max sequence length
 
 GPUS=1
 

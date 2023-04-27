@@ -92,7 +92,7 @@ class Gtu(nn.Module):
             act_type=act_type,
             layers=rpe_layers,
             norm_type=norm_type,
-        )
+        ).__dict__
         if self.tno_type == 'tno':  # Vanilla Toeplitz Neural Operator (TNO)
             self.toep = Tno(**config)
         elif self.tno_type == 'tno_inv_time':  # TNO with inverted time

@@ -7,11 +7,15 @@ SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 #ARCH=laxtnn_sns_tiny
 #wandb_proj=spikes-n-sines-causal
 
-ARCH=ski_alm_tiny
-wandb_proj=ski-causal
+#ARCH=ski_alm_tiny
+#wandb_proj=ski-causal
 
-ARCH=tno_inv_time
-wandb_proj=tno-inv-time
+#ARCH=tno_inv_time
+#wandb_proj=tno-inv-time
+
+ARCH=skitno_inv_time
+wandb_proj=mlp-free-causal
+
 # change to your data dir
 DATA_DIR=${SCRIPT_DIR}/../../data-bin/wikitext-103
 

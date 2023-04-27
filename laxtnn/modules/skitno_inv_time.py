@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+from torch.nn import functional as F
 
 # from custom fairseq
 
@@ -16,27 +17,29 @@ class SKITnoInvTime(Sltno):
         hd = h*dim
         # explicit interpolation grid to represent the interval [-1, 1]
         self.zeros = nn.Parameter(torch.randn((1, hd)))  # [-inf, inf]
-        if not self.causal:
-            if r % 2 != 0:  # make r odd so we can force the center to be 0
-                r += 1
-                self.r = r
         self.alphas = nn.Parameter(torch.randn((1, hd, 1, r)))  # [-inf, inf]
+        # negative
+        if not self.causal:
+            self.betas = nn.Parameter(torch.randn((1, hd, 1, r)))  # [-inf, inf]
 
     def rpe(self, t):
         """
         t: (r, 1) values in in interval [1, infty)
         """
-        grid = self.alphas
         t = t.transpose(-2, -1)[None]  # (1, 1, r)  fake batch and height dims
         t = torch.sign(t) * (self.gamma ** torch.abs(t))
         if self.causal:
             t = 2*t - 1 # shift [0,1] to normalized [-1,1]
-            grid[..., 0] = 0
+            shape = self.alphas.shape[:-1] + (self.r+1, )
+            inp = torch.zeros(shape, device=t.device)
+            inp[..., :-1] = self.alphas
         else:
             # grid = self.alphas  # (1, hd, 1, r) == (n, c, h, w)
-            grid[..., self.r // 2] = 0
+            shape = self.betas.shape[:-1] + (1, )
+            inp = torch.cat([self.betas, torch.zeros(shape, device=t.device), self.alphas], dim=-1)  # 2r+1
         t = torch.stack([t, torch.zeros_like(t)], dim=-1)  # (1, 1, r, 2) == (n, h, w, 2)
-        return nn.functional.grid_sample(t, grid, mode='linear', align_corners=True)[0, :, 0].transpose(-2,-1)  # (r, hd)
+        interpd = F.grid_sample(inp, t, mode='bilinear', align_corners=True)  # (1, hd, 1, r)
+        return interpd[0, :, 0].transpose(-2,-1)  # (r, hd)
 
     def gen_low_rank_U(self, t):
         """
@@ -47,7 +50,7 @@ class SKITnoInvTime(Sltno):
         falloff = self.gamma ** (t * n)  # (n, 1)
         original_loc = t[..., 0]  # (n, )
 
-        inducing = torch.arange(self.r) * (n-1) / (self.r-1)
+        inducing = torch.arange(self.r, device=t.device) * (n-1) / (self.r-1)
         # get largest point in the inducing < the original location
         # TODO: closed form since it's all uniform? (not super important)
         indices = torch.searchsorted(inducing, original_loc)
@@ -75,17 +78,17 @@ class SKITnoInvTime(Sltno):
         W = self.gen_low_rank_U(t)
 
         # build inducing kernel matrix
-        positions = torch.arange(1, self.r) * (n-1) / (self.r-1)
+        positions = torch.arange(1, self.r, device=x.device) * (n-1) / (self.r-1)
         positions = positions[:, None]  # (r-1, 1)
         zero = self.zeros  # (1, hd)
         pos = self.rpe(positions)  # (r-1, hd)
         # following needs flip to match circulant structure!
         neg = self.rpe(-positions.flip(0))  # (r-1, hd)
         a = torch.cat([zero, pos, zero, neg], dim=0)  # (2r, hd)
-        a = self.a.transpose(0,1)  # (hd, 2r)
+        a = a.transpose(0,1)  # (hd, 2r)
         S = ToepMat(a, self.r) 
 
-        # this one is still slow
+        ## sparse matmuls, still not much speedup? maybe the reshape
         # x = x.transpose(0, 1).reshape((n, b*hd))  # (n, b*hd)
         # Wt = W.T
         # W = W.to_sparse()
@@ -95,25 +98,25 @@ class SKITnoInvTime(Sltno):
         # output = (S @ output)[..., 0].permute((2,0,1)).view((self.r, b*hd))  # (r, b*hd)
         # output = torch.sparse.mm(W, output)  # (n, b*hd)
         # output = output.view((n, b, hd)).transpose(0, 1)  # (b, n, hd)
-        output = W @ (S @ ( W.T @ x.transpose(-1, -2)[..., None]))
+        output = W @ (S @ ( W.T @ x.transpose(-1, -2)[..., None]))[..., 0].transpose(-1, -2)
         return output
 
     def apply_toeplitz(self, x):
         b, n, hd = x.shape  # hd = num_heads*num_dims
-        ### two interpolations... why?
+        ### two interpolations
         # # build inducing kernel matrix
-        # positions = torch.arange(1, self.r) * (n-1) / (self.r-1)
+        # positions = torch.arange(1, self.r, device=x.device) * (n-1) / (self.r-1)
         # # positive only (causal)
         # pos = self.rpe(positions[:, None])  # (r-1, hd)
         # pos_r = torch.cat([self.zeros, pos], dim=0)  # (r, hd)
         # # apply interpolation (need fake batch dim)
         # pos_r = pos_r[None].transpose(-1,-2) # (1, hd, r)
-        # a = torch.nn.functional.interpolate(pos_r, (n,), mode='linear', align_corners=True)[0]  # (hd, n)
+        # a = F.interpolate(pos_r, (n,), mode='linear', align_corners=True)[0]  # (hd, n)
 
-        # directly get all positions from RPE
-        positions = torch.arange(1, n)
-        pos = self.rpe(positions[:, None])  # (r-1, hd)
-        a = torch.cat([self.zeros, pos], dim=0)  # (r, hd)
+        # directly get all positions from RPE (interp isn't much faster than grid_sample)
+        positions = torch.arange(1, n, device=x.device)
+        pos = self.rpe(positions[:, None])  # (n-1, hd)
+        a = torch.cat([self.zeros, pos], dim=0).transpose(-1, -2)  # (hd, n)
 
         a[:, :self.nk2+1] += self.conv_kernel
         S = ToepMat(a, n)

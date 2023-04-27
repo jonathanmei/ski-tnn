@@ -5,7 +5,6 @@ import math
 
 import torch
 import torch.nn as nn
-from fast_transformers.causal_product import causal_dot_product
 
 # from custom fairseq
 from fairseq.modules.helpers import get_activation_fn, print_params

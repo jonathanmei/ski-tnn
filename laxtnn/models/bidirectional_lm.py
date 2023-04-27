@@ -136,3 +136,24 @@ def laxtnn_blm_sns_tiny(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
+
+@register_model_architecture("laxtnn_blm", "ski_blm_inv_time")
+def laxtnn_blm_ski_inv_time(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # ski
+    args.tno_type = 'skitno_inv_time'
+    args.rank = 32
+    args.nk = 16
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
