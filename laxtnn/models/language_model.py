@@ -126,7 +126,61 @@ def laxtnn_decay_99_pre(args):
     # lax
     args.tno_type = 'tno'
 
+@register_model_architecture("laxtnn_lm", "laxtnn_decay_99_pre_r32")
+def laxtnn_decay_99_pre_r32(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 32
+    args.rpe_layers = 6
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    # lax
+    args.tno_type = 'tno'
+
+
 ################ begin llf: changing `rank` and `nk`
+@register_model_architecture("laxtnn_lm", "laxtnn_sns")
+def laxtnn_sns_laplace(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # lax
+    args.tno_type = 'llftno'
+    args.rank = 32
+    args.nk = 16
+    args.laplace = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+
 @register_model_architecture("laxtnn_lm", "laxtnn_sns_laplace")
 def laxtnn_sns_laplace(args):
     base_lm_architecture(args)

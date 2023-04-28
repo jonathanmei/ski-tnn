@@ -1,16 +1,21 @@
 #! /usr/bin/bash
 #arch=laxtnn_blm_decay_99
+arch=laxtnn_blm_decay_99_r32
 #arch=laxtnn_blm_sns_tiny
-#wandb="spikes-n-sines-bidirectional"
+#arch=laxtnn_blm_sns
+wandb="spikes-n-sines-bidirectional"
 
 #arch=ski_blm_tiny
 #wandb="ski-bidirectional"
 
-arch=ski_blm_inv_time
-wandb="mlp-free-bidirectional"
+#arch=ski_blm_inv_time
+#wandb="mlp-free-bidirectional"
 
-TOKENS_PER_SAMPLE=512  # Max sequence length
-#TOKENS_PER_SAMPLE=2048  # Max sequence length
+#TOKENS_PER_SAMPLE=512  # Max sequence length
+#MAX_SENTENCES=4
+
+TOKENS_PER_SAMPLE=2048  # Max sequence length
+MAX_SENTENCES=1
 
 GPUS=1
 
@@ -19,7 +24,6 @@ DATA_DIR=data-bin/wikitext-103
 ARCH=$arch
 TOTAL_UPDATES=50000    # Total number of training steps
 WARMUP_UPDATES=3000    # Warmup the learning rate over this many updates    
-MAX_SENTENCES=1
 PEAK_LR=0.0005         # Peak learning rate, adjust as needed
 CLIP_NORM=1.0
 PORT=$(( $RANDOM + 2000 ))

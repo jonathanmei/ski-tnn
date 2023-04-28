@@ -18,7 +18,7 @@ class ToepMat:
     Batch of Toeplitz matrices of size (..., n, n), represented by up to 2n elements in dim -1
         that allows us to use the torch syntax: A @ X
     e.g.
-        a = torch.cat([zero, pos, zero], dim=0)  # (..., r)
+        a = torch.cat([zero, pos], dim=0)  # (..., r)
             (causal only)
         a = torch.cat([zero, pos, zero, neg], dim=0)  # (..., 2n-1)
             (neg should be flipped as to make circulant)

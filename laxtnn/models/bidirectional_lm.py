@@ -89,6 +89,52 @@ def laxtnn_blm_decay_99(args):
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
 
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_decay_99_r32")
+def laxtnn_blm_decay_99_r32(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.tno_type = 'tno'
+    # rpe
+    args.rpe_embedding = 32
+    args.rpe_layers = 6
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+
+
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_sns")
+def laxtnn_blm_sns_tiny(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # lax
+    args.tno_type = 'llftno'
+    args.rank = 32
+    args.nk = 16
+    args.laplace = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+
+
 @register_model_architecture("laxtnn_blm", "laxtnn_blm_sns_tiny")
 def laxtnn_blm_sns_tiny(args):
     base_architecture(args)

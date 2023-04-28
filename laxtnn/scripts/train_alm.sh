@@ -1,10 +1,11 @@
 #! /usr/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-#ARCH=laxtnn_decay_99_pre
+#ARCH=laxtnn_decay_99_pre_r32
 #ARCH=laxtnn_sns_laplace
 #ARCH=laxtnn_sns_laplace_small
 #ARCH=laxtnn_sns_tiny
+#ARCH=laxtnn_sns
 #wandb_proj=spikes-n-sines-causal
 
 #ARCH=ski_alm_tiny
@@ -24,10 +25,10 @@ n_gpu=1
 profile=false
 #profile=true
 
-BATCH_SIZE=8
-TOKENS_PER_SAMPLE=512
-#BATCH_SIZE=2
-#TOKENS_PER_SAMPLE=2048
+#BATCH_SIZE=8
+#TOKENS_PER_SAMPLE=512
+BATCH_SIZE=2
+TOKENS_PER_SAMPLE=2048
 
 
 #### These don't change as much

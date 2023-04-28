@@ -8,6 +8,12 @@ from .rpe import Rpe
 from .sltno import Sltno
 from ..utils.toep_mat import ToepMat
 
+def sign0(x):
+    """
+    sign function that treats sign(x)==1 instead of sign(x)==0
+    """
+    return torch.sign(x) + (x==0).int()
+
 class SKITnoInvTime(Sltno):
     def __init__(self, h, dim, r, nk, **kwargs):
         """
@@ -16,7 +22,6 @@ class SKITnoInvTime(Sltno):
         super().__init__(h, dim, r, nk, **kwargs)
         hd = h*dim
         # explicit interpolation grid to represent the interval [-1, 1]
-        self.zeros = nn.Parameter(torch.randn((1, hd)))  # [-inf, inf]
         self.alphas = nn.Parameter(torch.randn((1, hd, 1, r)))  # [-inf, inf]
         # negative
         if not self.causal:
@@ -27,18 +32,19 @@ class SKITnoInvTime(Sltno):
         t: (r, 1) values in in interval [1, infty)
         """
         t = t.transpose(-2, -1)[None]  # (1, 1, r)  fake batch and height dims
-        t = torch.sign(t) * (self.gamma ** torch.abs(t))
+        # doesn't do much to cache this computation, it's not the bottleneck:
+        t = sign0(t) * (self.gamma ** torch.abs(t))
         if self.causal:
             t = 2*t - 1 # shift [0,1] to normalized [-1,1]
-            shape = self.alphas.shape[:-1] + (self.r+1, )
-            inp = torch.zeros(shape, device=t.device)
-            inp[..., :-1] = self.alphas
+            vals = F.pad(self.alphas, (1, 0), value=0)
         else:
-            # grid = self.alphas  # (1, hd, 1, r) == (n, c, h, w)
-            shape = self.betas.shape[:-1] + (1, )
-            inp = torch.cat([self.betas, torch.zeros(shape, device=t.device), self.alphas], dim=-1)  # 2r+1
-        t = torch.stack([t, torch.zeros_like(t)], dim=-1)  # (1, 1, r, 2) == (n, h, w, 2)
-        interpd = F.grid_sample(inp, t, mode='bilinear', align_corners=True)  # (1, hd, 1, r)
+            shape = self.betas.shape[:-1] + (2*self.r + 1, )
+            vals = torch.zeros(shape, device=self.betas.device)
+            vals[..., :self.r] = self.betas
+            vals[..., -self.r:] = self.alphas
+        t = F.pad(t[..., None], (0, 1), value=0)  # (1, 1, r, 2) == (n, h, w, 2)
+        # bottleneck
+        interpd = F.grid_sample(vals, t, mode='bilinear', align_corners=True)  # (1, hd, 1, r)
         return interpd[0, :, 0].transpose(-2,-1)  # (r, hd)
 
     def gen_low_rank_U(self, t):
@@ -78,45 +84,33 @@ class SKITnoInvTime(Sltno):
         W = self.gen_low_rank_U(t)
 
         # build inducing kernel matrix
-        positions = torch.arange(1, self.r, device=x.device) * (n-1) / (self.r-1)
-        positions = positions[:, None]  # (r-1, 1)
-        zero = self.zeros  # (1, hd)
-        pos = self.rpe(positions)  # (r-1, hd)
+        positions = torch.arange(self.r, device=x.device) * (n-1) / (self.r-1)
+        positions = positions[:, None]  # (r, 1)
+        nonneg = self.rpe(positions)  # (r, hd)
+        zero = nonneg[:1]  # (1, hd)
         # following needs flip to match circulant structure!
-        neg = self.rpe(-positions.flip(0))  # (r-1, hd)
-        a = torch.cat([zero, pos, zero, neg], dim=0)  # (2r, hd)
+        neg = self.rpe(-positions[1:].flip(0))  # (r-1, hd)
+        a = torch.cat([nonneg, zero, neg], dim=0)  # (2r, hd)
         a = a.transpose(0,1)  # (hd, 2r)
         S = ToepMat(a, self.r) 
 
-        ## sparse matmuls, still not much speedup? maybe the reshape
-        # x = x.transpose(0, 1).reshape((n, b*hd))  # (n, b*hd)
-        # Wt = W.T
-        # W = W.to_sparse()
-        # Wt = Wt.to_sparse()  # (r, n)
-        # # these `view` and `permute` required to use ToepMat aren't too expensive
-        # output = torch.sparse.mm(Wt, x).view((self.r, b, hd)).permute((1,2,0))[..., None]  # (b, hd, r, 1)
-        # output = (S @ output)[..., 0].permute((2,0,1)).view((self.r, b*hd))  # (r, b*hd)
-        # output = torch.sparse.mm(W, output)  # (n, b*hd)
-        # output = output.view((n, b, hd)).transpose(0, 1)  # (b, n, hd)
         output = W @ (S @ ( W.T @ x.transpose(-1, -2)[..., None]))[..., 0].transpose(-1, -2)
         return output
 
     def apply_toeplitz(self, x):
         b, n, hd = x.shape  # hd = num_heads*num_dims
-        ### two interpolations
-        # # build inducing kernel matrix
-        # positions = torch.arange(1, self.r, device=x.device) * (n-1) / (self.r-1)
-        # # positive only (causal)
-        # pos = self.rpe(positions[:, None])  # (r-1, hd)
-        # pos_r = torch.cat([self.zeros, pos], dim=0)  # (r, hd)
-        # # apply interpolation (need fake batch dim)
-        # pos_r = pos_r[None].transpose(-1,-2) # (1, hd, r)
-        # a = F.interpolate(pos_r, (n,), mode='linear', align_corners=True)[0]  # (hd, n)
+        # two interpolations
+        # build inducing kernel matrix
+        positions = torch.arange(self.r, device=x.device) * (n-1) / (self.r-1)
+        # nonneg only (causal)
+        nonneg = self.rpe(positions[:, None])  # (r, hd)
+        # apply interpolation (need fake batch dim)
+        nonneg = nonneg[None].transpose(-1,-2) # (1, hd, r)
+        a = F.interpolate(nonneg, (n,), mode='linear', align_corners=True)[0]  # (hd, n)
 
-        # directly get all positions from RPE (interp isn't much faster than grid_sample)
-        positions = torch.arange(1, n, device=x.device)
-        pos = self.rpe(positions[:, None])  # (n-1, hd)
-        a = torch.cat([self.zeros, pos], dim=0).transpose(-1, -2)  # (hd, n)
+        # positions = torch.arange(n, device=x.device)
+        # pos = self.rpe(positions[:, None])  # (n, hd)
+        # a = pos.transpose(-1, -2)  # (hd, n)
 
         a[:, :self.nk2+1] += self.conv_kernel
         S = ToepMat(a, n)
