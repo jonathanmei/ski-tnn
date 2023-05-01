@@ -49,15 +49,27 @@ class TnoFD(nn.Module):
             self.gamma = nn.Parameter(torch.randn(h, 1, dim))
 
         # import ipdb; ipdb.set_trace()
-        self.rpe = Rpe(
-            dim=rpe_dim,
-            outdim=h * dim * (1 if causal else 2),
-            residual=residual,
-            act=act,
-            bias=bias,
-            layers=layers,
-            norm_type=norm_type,
-        )
+        self.layers = layers
+
+        if layers == 0:
+            n = 512
+            self.n = n
+            self.w_axis = torch.linspace(0.0, np.pi, int(n / 2 + 1)).reshape(
+                int(n / 2 + 1), -1
+            )
+            self.coeffs = nn.Parameter(torch.ones(dim, int(n / 2)), requires_grad=True)
+            self.dc = nn.Parameter(torch.ones(dim, 1), requires_grad=True)
+
+        else:
+            self.rpe = Rpe(
+                dim=rpe_dim,
+                outdim=h * dim * (1 if causal else 2),
+                residual=residual,
+                act=act,
+                bias=bias,
+                layers=layers,
+                norm_type=norm_type,
+            )
 
         if self.causal:
             self.forward = self.forward_causal
@@ -107,6 +119,14 @@ class TnoFD(nn.Module):
 
         return index
 
+    def causal_spectrum(self, x):
+        f_dim = 1
+        num_freqs = x.shape[f_dim]
+        irfft_rp = torch.fft.irfft(x, dim=f_dim)  # ifft of real part of rpe kernel
+        irfft_rp[:, num_freqs::, :] = 0.0
+        irfft_rp[:, 0, :] *= 0.5
+        return 2.0 * torch.fft.rfft(irfft_rp, dim=f_dim)
+
     def rpe_transform(self, x):
         # n, 1 -> n, (d * h)
         res = self.rpe(x)
@@ -115,14 +135,7 @@ class TnoFD(nn.Module):
 
         if self.causal:
             # generate imag part from real part to enforce spectrum of causal kernel
-            f_dim = 1
-            num_freqs = res.shape[f_dim]
-            irfft_rp = torch.fft.irfft(
-                res, dim=f_dim
-            )  # ifft of real part of rpe kernel
-            irfft_rp[:, num_freqs::, :] = 0.0
-            irfft_rp[:, 0, :] *= 0.5
-            res = 2.0 * torch.fft.rfft(irfft_rp, dim=f_dim)
+            res = self.causal_spectrum(res)
 
         else:
             D = res.shape[2] // 2
@@ -143,7 +156,26 @@ class TnoFD(nn.Module):
         # zero = self.rpe_transform(self.get_zero().to(x))
         # pos = self.rpe_transform(self.get_pos(n - 1).to(x))
         fft_size = 2 * n
-        pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
+
+        if self.layers == 0:
+            # import ipdb
+
+            # ipdb.set_trace()
+
+            pos_w = torch.concat(
+                [
+                    self.dc,
+                    nn.functional.interpolate(
+                        self.coeffs.unsqueeze(0),
+                        scale_factor=int(fft_size / self.n),
+                        mode="linear",
+                    ).squeeze(0),
+                ],
+                dim=1,
+            )
+            pos_w = self.causal_spectrum(pos_w.transpose(1, 0).unsqueeze(0))
+        else:
+            pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
 
         # if self.use_decay or self.use_multi_decay:
         #     coef = torch.arange(0, n).reshape(1, -1, 1).to(x)

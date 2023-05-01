@@ -11,15 +11,16 @@ WARM_UP=4000
 UPDATE_FREQ=$(( 128 / $BATCH_SIZE / $1 ))
 PORT=$(( $RANDOM + 2000 ))
 echo $PORT
-LR=0.0005
+LR=0.001
 CLIP_NORM=1.0
 decay=0.2
 WANDB_PROJECT=tnn-fd
+NAME=$4
 
 fairseq-train --task language_modeling \
     $DATA_DIR \
     --user-dir laxtnn \
-    --save-dir checkpoints/$prefix/${ARCH} \
+    --save-dir checkpoints/$prefix/${NAME} \
     --distributed-world-size $1  --distributed-port $PORT \
     --arch $ARCH --share-decoder-input-output-embed \
     --dropout 0.1 \

@@ -14,4 +14,4 @@ name=$2
 # change to your data dir
 data_dir=data-bin/wikitext-103
 
-WANDB_NAME=$name bash ${SCRIPT_DIR}/train_alm.sh 1 $arch $data_dir
+WANDB_NAME=$name bash ${SCRIPT_DIR}/train_alm.sh 1 $arch $data_dir $name

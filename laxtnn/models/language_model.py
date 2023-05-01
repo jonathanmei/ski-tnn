@@ -157,6 +157,114 @@ def laxtnn_alm_tno_fd(args):
     args.tno_fd = True
 
 
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd_3lyrs")
+def laxtnn_alm_tno_fd_3lyrs(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 3
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = True
+
+
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd_lyrs0")
+def laxtnn_alm_tno_fd_lyrs0(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 0
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = True
+
+
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd_3lyrs_32emb")
+def laxtnn_alm_tno_fd_3lyrs_32emb(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 32
+    args.rpe_layers = 3
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = True
+
+
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd_rpe_emb32")
+def laxtnn_alm_tno_fd_rpe_emb32(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 32
+    args.rpe_layers = 6
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = True
+
+
 @register_model_architecture("laxtnn_lm", "laxtnn_alm_rt_spike32")
 def laxtnn_alm_rt_spike32(args):
     base_lm_architecture(args)
@@ -359,6 +467,46 @@ def laxtnn_alm_stl_K2S2x5_NoLatent(args):
         "strides": [2] * 5,
         "act_fn": nn.SiLU(),
         "enc_out_fn": nn.SiLU(),
+        "dec_out_fn": None,
+        "latent_net": None,
+        "unet_connections": False,
+        "spike_len": 0,
+    }
+
+
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_stl_K2S2x1_ReLU_NoLatent")
+def laxtnn_alm_stl_K2S2x1_ReLU_NoLatent(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 6
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = False
+    args.tno_spike = False
+    args.par_type = 1
+    args.strottle = True
+    args.strottle_cfg = {
+        "kernel_sizes": [2],
+        "strides": [2],
+        "act_fn": nn.ReLU(),
+        "enc_out_fn": nn.ReLU(),
         "dec_out_fn": None,
         "latent_net": None,
         "unet_connections": False,
