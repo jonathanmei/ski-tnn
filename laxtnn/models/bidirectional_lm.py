@@ -173,7 +173,7 @@ def laxtnn_blm_tno_fd_3lyrs(args):
 
 
 @register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_2lyrs")
-def laxtnn_blm_tno_fd(args):
+def laxtnn_blm_tno_fd_2lyrs(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True
