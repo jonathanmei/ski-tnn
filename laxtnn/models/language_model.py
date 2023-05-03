@@ -129,6 +129,32 @@ def laxtnn_alm_baseline(args):
     args.glu_dim = args.decoder_embed_dim
     args.tno_fd = False
 
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_baseline_3lyrs")
+def laxtnn_alm_baseline_3lyrs(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 3
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = False
+
 
 @register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd")
 def laxtnn_alm_tno_fd(args):
@@ -183,6 +209,58 @@ def laxtnn_alm_tno_fd_3lyrs(args):
     args.glu_dim = args.decoder_embed_dim
     args.tno_fd = True
 
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd_2lyrs")
+def laxtnn_alm_tno_fd_2lyrs(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 2
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = True
+
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd_1lyrs")
+def laxtnn_alm_tno_fd_2lyrs(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 1
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = True
+
 
 @register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd_lyrs0")
 def laxtnn_alm_tno_fd_lyrs0(args):
@@ -204,6 +282,32 @@ def laxtnn_alm_tno_fd_lyrs0(args):
     # rpe
     args.rpe_embedding = 64
     args.rpe_layers = 0
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.decoder_embed_dim
+    args.tno_fd = True
+
+@register_model_architecture("laxtnn_lm", "laxtnn_alm_tno_fd_noop")
+def laxtnn_alm_tno_fd_noop(args):
+    base_lm_architecture(args)
+    args.decoder_normalize_before = True
+    # model
+    args.decoder_attention_heads = 1
+    args.decoder_layers = 7
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.act_fun = "silu"
+    args.causal = True
+    args.expand_ratio = 3
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    args.use_decay = True
+    args.gamma = 0.99
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = -1
     args.residual = False
     # glu
     args.glu_act = "silu"

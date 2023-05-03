@@ -14,12 +14,13 @@ ARCH=$2
 DATA_DIR=$3
 UPDATE_FREQ=$(( 512 / $MAX_SENTENCES / $GPUS ))
 WANDB_PROJECT=tnn-fd
+NAME=$4
 
 fairseq-train $DATA_DIR \
     --user-dir laxtnn \
     --task masked_lm --criterion masked_lm \
     --distributed-world-size $GPUS  --distributed-port $PORT \
-    --save-dir checkpoints/$prefix/$ARCH \
+    --save-dir checkpoints/$prefix/$NAME \
     --arch $ARCH --sample-break-mode complete --tokens-per-sample $TOKENS_PER_SAMPLE \
     --optimizer adam --adam-betas '(0.9,0.98)' --adam-eps 1e-6 --clip-norm $CLIP_NORM \
     --lr-scheduler polynomial_decay --lr $PEAK_LR --warmup-updates $WARMUP_UPDATES --total-num-update $TOTAL_UPDATES \

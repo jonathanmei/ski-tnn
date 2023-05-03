@@ -80,8 +80,8 @@ class LaxTnnBlm(RobertaModel):
         )
 
 
-@register_model_architecture("laxtnn_blm", "laxtnn_blm_decay_99")
-def laxtnn_blm_decay_99(args):
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_baseline")
+def laxtnn_blm_baseline(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True
@@ -96,6 +96,27 @@ def laxtnn_blm_decay_99(args):
     # rpe
     args.rpe_embedding = 64
     args.rpe_layers = 6
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_baseline_3lyrs")
+def laxtnn_blm_baseline_3lyrs(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 3
     args.residual = False
     # glu
     args.glu_act = "silu"
@@ -118,6 +139,78 @@ def laxtnn_blm_tno_fd(args):
     # rpe
     args.rpe_embedding = 64
     args.rpe_layers = 6
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+
+    args.tno_fd = True
+
+
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_3lyrs")
+def laxtnn_blm_tno_fd(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 3
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+
+    args.tno_fd = True
+
+
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_2lyrs")
+def laxtnn_blm_tno_fd(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 2
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+
+    args.tno_fd = True
+
+
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_lyrs0")
+def laxtnn_blm_tno_fd(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 0
     args.residual = False
     # glu
     args.glu_act = "silu"

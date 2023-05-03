@@ -146,9 +146,9 @@ class Tno(nn.Module):
         return output
 
     def forward_non_causal(self, x, dim=-2, normalize=False):
-        import ipdb
+        # import ipdb
 
-        ipdb.set_trace()
+        # ipdb.set_trace()
         # x: b, h, n, d
         n = x.shape[dim]
         # a0, a1, ... , a(n-1), a0, a(-(n-1)), ... , a(-1)

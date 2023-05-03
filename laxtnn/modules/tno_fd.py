@@ -52,12 +52,28 @@ class TnoFD(nn.Module):
         self.layers = layers
 
         if layers == 0:
-            n = 512
+
+            self.ntrp_cat = True
+
+            F = 256  # approximate number of frequence points
+            n = 2 * F
             self.n = n
             self.w_axis = torch.linspace(0.0, np.pi, int(n / 2 + 1)).reshape(
                 int(n / 2 + 1), -1
             )
-            self.coeffs = nn.Parameter(torch.ones(dim, int(n / 2)), requires_grad=True)
+
+            n_ntrp = int(n / 2) if self.ntrp_cat else int(n / 2 + 1)
+            if self.causal:
+
+                self.coeffs = nn.Parameter(torch.randn(dim, n_ntrp), requires_grad=True)
+            else:
+                self.coeffs_re = nn.Parameter(
+                    torch.randn(dim, n_ntrp), requires_grad=True
+                )
+                self.coeffs_im = nn.Parameter(
+                    torch.randn(dim, n_ntrp), requires_grad=True
+                )
+
             self.dc = nn.Parameter(torch.ones(dim, 1), requires_grad=True)
 
         else:
@@ -87,37 +103,6 @@ class TnoFD(nn.Module):
         #     index = torch.exp(torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n)
 
         return w_axis
-
-    def get_pos(self, n):
-        if self.par_type == 1:
-            index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0
-        elif self.par_type == 2:
-            index = torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n
-        elif self.par_type == 3:
-            index = torch.exp(torch.arange(1, 1 + n).reshape(n, -1) * 1.0 / n)
-
-        return index
-
-    def get_zero(self):
-        index = torch.zeros(1).reshape(1, -1) * 1.0
-        if self.par_type == 3:
-            index = torch.exp(index)
-
-        return index
-
-    def get_neg(self, n):
-        if self.causal:
-            index = (
-                torch.ones(self.h * n * self.dim).reshape(self.h, n, self.dim)
-                * self.zero_value
-            )
-        else:
-            if self.par_type == 1:
-                index = -torch.arange(1, 1 + n).flip(0).reshape(n, -1) * 1.0
-            elif self.par_type == 2:
-                index = -torch.arange(1, 1 + n).flip(0).reshape(n, -1) * 1.0 / n
-
-        return index
 
     def causal_spectrum(self, x):
         f_dim = 1
@@ -156,26 +141,43 @@ class TnoFD(nn.Module):
         # zero = self.rpe_transform(self.get_zero().to(x))
         # pos = self.rpe_transform(self.get_pos(n - 1).to(x))
         fft_size = 2 * n
-
+        keep = None
         if self.layers == 0:
             # import ipdb
 
             # ipdb.set_trace()
 
-            pos_w = torch.concat(
-                [
-                    self.dc,
-                    nn.functional.interpolate(
-                        self.coeffs.unsqueeze(0),
-                        scale_factor=int(fft_size / self.n),
-                        mode="linear",
-                    ).squeeze(0),
-                ],
-                dim=1,
-            )
+            if self.ntrp_cat:
+                pos_w = torch.cat(
+                    [
+                        self.dc,
+                        nn.functional.interpolate(
+                            self.coeffs.unsqueeze(0),
+                            scale_factor=int(fft_size / self.n),
+                            mode="linear",
+                        ).squeeze(0),
+                    ],
+                    dim=1,
+                )
+            else:
+                sf = int(fft_size / self.n)
+                pos_w = nn.functional.interpolate(
+                    self.coeffs.unsqueeze(0),
+                    scale_factor=sf,
+                    mode="linear",
+                ).squeeze(0)
+                pos_w = pos_w[:, 0 : -(sf - 1)]
+
             pos_w = self.causal_spectrum(pos_w.transpose(1, 0).unsqueeze(0))
+
+        elif self.layers == -1:
+            pos_w = self.get_w(fft_size).to(x)
         else:
-            pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
+            # import ipdb; ipdb.set_trace()
+            w = self.get_w(fft_size).to(x)
+
+            pos_w = self.rpe_transform(w)
+            # pos_w = torch.concat([pos_w, torch.zeros(1,F-keep,1536).to(pos_w)],dim=1)
 
         # if self.use_decay or self.use_multi_decay:
         #     coef = torch.arange(0, n).reshape(1, -1, 1).to(x)
@@ -188,11 +190,12 @@ class TnoFD(nn.Module):
         # pos = gamma * pos
         # a = torch.cat([zero, pos, zero], dim=1)
 
-        a = self.act_fun(pos_w)
+        a = self.act_fun(pos_w) if self.layers != 0 else pos_w
+        # a = pos_w
 
         # x: b, h, n, d
         # a: h, l, d
-        output = self.compute(x, a, dim, n)
+        output = self.compute(x, a, dim, n, fft_size)
 
         if normalize:
             size = list(x.shape[:-1]) + [1]
@@ -212,9 +215,53 @@ class TnoFD(nn.Module):
         # pos = self.rpe_transform(self.get_pos(n - 1).to(x))
 
         # neg_index = self.get_neg(n - 1).to(x)
+        # import ipdb
 
-        fft_size = 2 * n
-        pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
+        # ipdb.set_trace()
+        # fft_size = 2 * n
+        # if not (n in [445, 477]):
+        #     import ipdb
+
+        #     ipdb.set_trace()
+
+        # fft_size = 2 * n
+        fft_size = int(2 ** np.ceil(np.log2(2 * n)))
+        # fft_size = 1024
+
+        if self.layers == 0:
+            # import ipdb
+
+            # ipdb.set_trace()
+            sf = int(fft_size / self.n)
+
+            pos_r = nn.functional.interpolate(
+                self.coeffs_re.unsqueeze(0),
+                scale_factor=sf,
+                mode="linear",
+            ).squeeze(0)
+
+            pos_i = nn.functional.interpolate(
+                self.coeffs_im.unsqueeze(0),
+                scale_factor=sf,
+                mode="linear",
+            ).squeeze(0)
+
+            pos_i[:, -1] = 0.0  # Nyquist bin should be real valued
+
+            pos_w = torch.cat(
+                [
+                    self.dc,
+                    torch.complex(pos_r, pos_i),
+                ],
+                dim=1,
+            )
+            pos_w = pos_w.transpose(1, 0).unsqueeze(0)
+            # pos_w = self.causal_spectrum(pos_w.transpose(1, 0).unsqueeze(0))
+
+        elif self.layers == -1:
+            pos_w = self.get_w(fft_size).to(x)
+        else:
+            pos_w = self.rpe_transform(self.get_w(fft_size).to(x))
 
         # if self.causal:
         #     neg = neg_index
@@ -232,10 +279,10 @@ class TnoFD(nn.Module):
         #     pos = gamma * pos
         #     neg = torch.flip(gamma, dims=[1]) * neg
         # a = torch.cat([zero, pos, zero, neg], dim=1)
-        a = self.act_fun(pos_w)
+        a = self.act_fun(pos_w) if self.layers else pos_w
         # x: b, h, n, d
         # a: h, l, d
-        output = self.compute(x, a, dim, n)
+        output = self.compute(x, a, dim, n, fft_size)
 
         if normalize:
             size = list(x.shape[:-1]) + [1]
@@ -245,13 +292,15 @@ class TnoFD(nn.Module):
 
         return output
 
-    def compute(self, x, a, dim, n):
+    def compute(self, x, a, dim, n, fft_size):
         # x: b, h, n, d
         # a: h, n, d
-        y = torch.fft.rfft(x, 2 * n, dim=dim)
+        y = torch.fft.rfft(x, fft_size, dim=dim)
         # v = torch.fft.rfft(a, 2 * n, dim=dim).unsqueeze(0)
+
         u = a * y
-        output = torch.fft.irfft(u, 2 * n, dim=dim)[:, :, :n, :]
+
+        output = torch.fft.irfft(u, fft_size, dim=dim)[:, :, :n, :]
 
         return output
 
