@@ -52,7 +52,6 @@ class TnoFD(nn.Module):
         self.layers = layers
 
         if layers == 0:
-
             self.ntrp_cat = True
 
             F = 256  # approximate number of frequence points
@@ -64,7 +63,6 @@ class TnoFD(nn.Module):
 
             n_ntrp = int(n / 2) if self.ntrp_cat else int(n / 2 + 1)
             if self.causal:
-
                 self.coeffs = nn.Parameter(torch.randn(dim, n_ntrp), requires_grad=True)
             else:
                 self.coeffs_re = nn.Parameter(

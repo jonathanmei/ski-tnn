@@ -101,6 +101,7 @@ def laxtnn_blm_baseline(args):
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
 
+
 @register_model_architecture("laxtnn_blm", "laxtnn_blm_baseline_3lyrs")
 def laxtnn_blm_baseline_3lyrs(args):
     base_architecture(args)
@@ -148,7 +149,7 @@ def laxtnn_blm_tno_fd(args):
 
 
 @register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_3lyrs")
-def laxtnn_blm_tno_fd(args):
+def laxtnn_blm_tno_fd_3lyrs(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True
@@ -196,7 +197,7 @@ def laxtnn_blm_tno_fd(args):
 
 
 @register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_lyrs0")
-def laxtnn_blm_tno_fd(args):
+def laxtnn_blm_tno_fd_lyrs0(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True
