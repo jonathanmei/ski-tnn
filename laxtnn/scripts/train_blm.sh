@@ -1,23 +1,27 @@
 #! /usr/bin/bash
 #arch=laxtnn_blm_decay_99
-arch=laxtnn_blm_decay_99_r32
+#arch=laxtnn_blm_decay_99_r32
 #arch=laxtnn_blm_sns_tiny
 #arch=laxtnn_blm_sns
-wandb="spikes-n-sines-bidirectional"
+#wandb="spikes-n-sines-bidirectional"
 
 #arch=ski_blm_tiny
 #wandb="ski-bidirectional"
 
-#arch=ski_blm_inv_time
-#wandb="mlp-free-bidirectional"
+arch=ski_blm_inv_time
+wandb="mlp-free-bidirectional"
+
+GPUS=1
 
 #TOKENS_PER_SAMPLE=512  # Max sequence length
 #MAX_SENTENCES=4
+#UPDATE_FREQ=$(( 512 / $MAX_SENTENCES / $GPUS ))
 
 TOKENS_PER_SAMPLE=2048  # Max sequence length
-MAX_SENTENCES=1
+MAX_SENTENCES=4
+UPDATE_FREQ=$(( 128 / $MAX_SENTENCES / $GPUS ))
 
-GPUS=1
+#MAX_SENTENCES=1
 
 # change to your data dir
 DATA_DIR=data-bin/wikitext-103
@@ -28,7 +32,6 @@ PEAK_LR=0.0005         # Peak learning rate, adjust as needed
 CLIP_NORM=1.0
 PORT=$(( $RANDOM + 2000 ))
 prefix=roberta
-UPDATE_FREQ=$(( 512 / $MAX_SENTENCES / $GPUS ))
 
 fairseq-train $DATA_DIR \
     --user-dir laxtnn \

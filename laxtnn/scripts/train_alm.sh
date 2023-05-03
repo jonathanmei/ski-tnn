@@ -1,6 +1,7 @@
 #! /usr/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
+#ARCH=laxtnn_decay_99_pre
 #ARCH=laxtnn_decay_99_pre_r32
 #ARCH=laxtnn_sns_laplace
 #ARCH=laxtnn_sns_laplace_small
@@ -28,6 +29,7 @@ profile=false
 #BATCH_SIZE=8
 #TOKENS_PER_SAMPLE=512
 BATCH_SIZE=2
+BATCH_SIZE=8
 TOKENS_PER_SAMPLE=2048
 
 
