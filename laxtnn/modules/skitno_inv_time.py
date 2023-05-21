@@ -2,9 +2,6 @@ import torch
 from torch import nn
 from torch.nn import functional as F
 
-# from custom fairseq
-
-from .rpe import Rpe
 from .sltno import Sltno
 from ..utils.toep_mat import ToepMat
 

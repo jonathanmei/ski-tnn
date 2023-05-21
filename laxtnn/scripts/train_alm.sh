@@ -1,20 +1,6 @@
 #! /usr/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-#ARCH=laxtnn_decay_99_pre
-#ARCH=laxtnn_decay_99_pre_r32
-#ARCH=laxtnn_sns_laplace
-#ARCH=laxtnn_sns_laplace_small
-#ARCH=laxtnn_sns_tiny
-#ARCH=laxtnn_sns
-#wandb_proj=spikes-n-sines-causal
-
-#ARCH=ski_alm_tiny
-#wandb_proj=ski-causal
-
-#ARCH=tno_inv_time
-#wandb_proj=tno-inv-time
-
 ARCH=skitno_inv_time
 wandb_proj=mlp-free-causal
 
@@ -26,10 +12,8 @@ n_gpu=1
 profile=false
 #profile=true
 
-#BATCH_SIZE=8
-#TOKENS_PER_SAMPLE=512
-BATCH_SIZE=2
 BATCH_SIZE=8
+#TOKENS_PER_SAMPLE=512
 TOKENS_PER_SAMPLE=2048
 
 
@@ -41,7 +25,7 @@ WARM_UP=4000
 UPDATE_FREQ=$(( 128 / $BATCH_SIZE / $n_gpu ))
 PORT=$(( $RANDOM + 2000 ))
 echo $PORT
-LR=0.0005
+LR=0.001
 CLIP_NORM=1.0
 decay=0.2
 if [ "$profile" = true ]; then
@@ -49,13 +33,14 @@ if [ "$profile" = true ]; then
 else
     task=language_modeling
 fi
+NAME=$ARCH
 
 fairseq-train --task $task \
     $DATA_DIR \
     --user-dir ${SCRIPT_DIR}/.. \
     --wandb-project $wandb_proj \
-    --save-dir checkpoints/$prefix/${ARCH} \
     --distributed-world-size $n_gpu  --distributed-port $PORT \
+    --save-dir checkpoints/$prefix/${NAME} \
     --arch $ARCH --share-decoder-input-output-embed \
     --dropout 0.1 \
     --optimizer adam --adam-betas '(0.9, 0.98)' --weight-decay $decay --clip-norm $CLIP_NORM \
@@ -64,4 +49,8 @@ fairseq-train --task $task \
     --max-tokens $MAX_TOKEN --update-freq $UPDATE_FREQ \
     --ddp-backend=legacy_ddp \
     --batch-size $BATCH_SIZE \
-    --max-update $MAX_UPDATE --log-interval 10 2>&1 | tee $ARCH.log
+    --max-update $MAX_UPDATE \
+    --log-interval 10 \
+    --wandb-project $WANDB_PROJECT \
+    --seed 1000 \
+     2>&1 | tee $ARCH.log \

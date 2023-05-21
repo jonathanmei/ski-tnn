@@ -1,10 +1,22 @@
-from fairseq.models import register_model, register_model_architecture
+import torch.nn as nn
+import torch.nn.functional as F
+from fairseq import utils
+from fairseq.models import (
+    FairseqEncoder,
+    FairseqEncoderModel,
+    register_model,
+    register_model_architecture,
+)
 from fairseq.models.roberta import (
     RobertaClassificationNoClsHead,
     RobertaEncoder,
     RobertaModel,
     base_architecture,
 )
+from fairseq.models.transformer import DEFAULT_MIN_PARAMS_TO_WRAP, TransformerEncoder
+from fairseq.models.xformer import TnnV2Encoder
+from fairseq.modules import LayerNorm
+from fairseq.modules.quant_noise import quant_noise as apply_quant_noise_
 from fairseq.modules.transformer_sentence_encoder import init_bert_params
 
 from .xformer import LaxtnnEncoder
@@ -67,8 +79,8 @@ class LaxTnnBlm(RobertaModel):
         )
 
 
-@register_model_architecture("laxtnn_blm", "laxtnn_blm_decay_99")
-def laxtnn_blm_decay_99(args):
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_baseline")
+def laxtnn_blm_baseline(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True
@@ -89,8 +101,9 @@ def laxtnn_blm_decay_99(args):
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
 
-@register_model_architecture("laxtnn_blm", "laxtnn_blm_decay_99_r32")
-def laxtnn_blm_decay_99_r32(args):
+
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_baseline_3lyrs")
+def laxtnn_blm_baseline_3lyrs(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True
@@ -102,18 +115,17 @@ def laxtnn_blm_decay_99_r32(args):
     args.gamma = 0.99
     args.use_norm = False
     args.norm_type = "simplermsnorm"
-    args.tno_type = 'tno'
     # rpe
-    args.rpe_embedding = 32
-    args.rpe_layers = 6
+    args.rpe_embedding = 64
+    args.rpe_layers = 3
     args.residual = False
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
 
 
-@register_model_architecture("laxtnn_blm", "laxtnn_blm_sns")
-def laxtnn_blm_sns_tiny(args):
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd")
+def laxtnn_blm_tno_fd(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True
@@ -125,59 +137,33 @@ def laxtnn_blm_sns_tiny(args):
     args.gamma = 0.99
     args.use_norm = False
     args.norm_type = "simplermsnorm"
-    # lax
-    args.tno_type = 'llftno'
-    args.rank = 32
-    args.nk = 16
-    args.laplace = False
-    # glu
-    args.glu_act = "silu"
-    args.glu_dim = args.encoder_embed_dim
-
-
-@register_model_architecture("laxtnn_blm", "laxtnn_blm_sns_tiny")
-def laxtnn_blm_sns_tiny(args):
-    base_architecture(args)
-    # pos
-    args.no_token_positional_embeddings = True
-    # gtu
-    args.toep_type = 1
-    args.expand_ratio = 3
-    args.encoder_attention_heads = 1
-    args.use_decay = True
-    args.gamma = 0.99
-    args.use_norm = False
-    args.norm_type = "simplermsnorm"
-    # lax
-    args.tno_type = 'llftno'
-    args.rank = 4
-    args.nk = 7
-    args.laplace = False
-    args.fft_bw = False
-    # glu
-    args.glu_act = "silu"
-    args.glu_dim = args.encoder_embed_dim
-
-@register_model_architecture("laxtnn_blm", "ski_blm_tiny")
-def laxtnn_blm_sns_tiny(args):
-    base_architecture(args)
-    # pos
-    args.no_token_positional_embeddings = True
-    # gtu
-    args.toep_type = 1
-    args.expand_ratio = 3
-    args.encoder_attention_heads = 1
-    args.use_decay = True
-    args.gamma = 0.99
-    args.use_norm = False
-    args.norm_type = "simplermsnorm"
-    # ski
-    args.tno_type = 'skitno'
-    args.rank = 16
-    args.nk = 7
     # rpe
-    args.rpe_embedding = 32
-    args.rpe_layers = 5
+    args.rpe_embedding = 64
+    args.rpe_layers = 6
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+
+    args.tno_fd = True
+
+
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_3lyrs")
+def laxtnn_blm_tno_fd_3lyrs(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 3
     args.residual = False
     # glu
     args.glu_act = "silu"
@@ -203,3 +189,26 @@ def laxtnn_blm_ski_inv_time(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
+
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_lyrs0")
+def laxtnn_blm_tno_fd_lyrs0(args):
+    base_architecture(args)
+    # pos
+    args.no_token_positional_embeddings = True
+    # gtu
+    args.toep_type = 1
+    args.expand_ratio = 3
+    args.encoder_attention_heads = 1
+    args.use_decay = True
+    args.gamma = 0.99
+    args.use_norm = False
+    args.norm_type = "simplermsnorm"
+    # rpe
+    args.rpe_embedding = 64
+    args.rpe_layers = 0
+    args.residual = False
+    # glu
+    args.glu_act = "silu"
+    args.glu_dim = args.encoder_embed_dim
+
+    args.tno_fd = True

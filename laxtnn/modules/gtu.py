@@ -3,14 +3,12 @@ from einops import rearrange
 
 import torch
 import torch.nn as nn
-# from custom fairseq
-from fairseq.modules.helpers import get_activation_fn, get_norm_fn
 
 from .tno import Tno  # Vanilla Toeplitz Neural Operator (TNO)
-from .tno_inv_time import TnoInvTime  # TNO with inverted time
-from .llftno import Llftno  # Learned Laplace Features (LLF) TNO
+from .tno_fd import TnoFD
 from .skitno import SKITno  # Structured Kernel Interpolation (SKI) TNO
 from .skitno_inv_time import SKITnoInvTime
+from ..utils.misc import get_activation_fn, get_norm_fn
 
 @dataclass
 class TnoConfig:
@@ -54,6 +52,11 @@ class Gtu(nn.Module):
         act_type="none",
         # lax
         args=None,
+        tno_fd=False,
+        tno_spike=False,
+        spike_len=32,
+        strottle=False,
+        strottle_cfg={},
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -61,7 +64,7 @@ class Gtu(nn.Module):
         self.resi_param = resi_param
         self.num_heads = num_heads
         self.normalize = normalize
-        
+
         if self.resi_param:
             self.d = nn.Parameter(torch.randn(embed_dim))
 
@@ -74,15 +77,22 @@ class Gtu(nn.Module):
         self.o = nn.Linear(d1, embed_dim, bias=bias)
         self.act = get_activation_fn(act_fun)
 
-        # tno
-        # lax
+        assert not (tno_fd and tno_spike), "Can only enable 1 TNO variant at a time."
+        assert not (tno_fd and strottle), "Can only enable 1 TNO variant at a time."
+
+        TnoModule = TnoFD if tno_fd else Tno
+        kwargs = {}
+        if tno_spike:
+            kwargs["spike_len"] = spike_len
+        if strottle:
+            kwargs["strottle_cfg"] = strottle_cfg
         self.tno_type = args.tno_type
         config = TnoConfig(
             h=num_heads, 
             dim=self.head_dim,
-            rpe_dim=rpe_embedding, 
-            causal=causal, 
-            use_decay=use_decay, 
+            rpe_dim=rpe_embedding,
+            causal=causal,
+            use_decay=use_decay,
             use_multi_decay=use_multi_decay,
             residual=residual,
             act=rpe_act,
@@ -94,27 +104,17 @@ class Gtu(nn.Module):
             norm_type=norm_type,
         ).__dict__
         if self.tno_type == 'tno':  # Vanilla Toeplitz Neural Operator (TNO)
-            self.toep = Tno(**config)
-        elif self.tno_type == 'tno_inv_time':  # TNO with inverted time
-            self.toep = TnoInvTime(**config)
+            self.toep = TnoModule(**config)
         elif self.tno_type == 'skitno':  # Structured Kernel Interpolation (SKI) TNO
             self.rank = args.rank
             self.nk = args.nk
             self.toep = SKITno(r=self.rank, nk=self.nk,  # conv kernel width
                 **config
             )
-        elif self.tno_type == 'skitno_inv_time':
+        else:  # self.tno_type == 'skitno_inv_time':
             self.rank = args.rank
             self.nk = args.nk
             self.toep = SKITnoInvTime(r=self.rank, nk=self.nk,  # conv kernel width
-                **config
-            )
-        else:  # tno_type == 'llftno':  # Learned Laplace Features (LLF) TNO
-            self.rank = args.rank
-            self.nk = args.nk
-            self.toep = Llftno(r=self.rank, nk=self.nk,  # conv kernel width
-                # lax
-                laplace=args.laplace,
                 **config
             )
 
@@ -123,25 +123,23 @@ class Gtu(nn.Module):
         self.use_norm = use_norm
         if self.use_norm:
             self.norm = get_norm_fn(self.norm_type)(d1)
-    
+
     def forward(self, x):
         # x: b, h, w, d
         num_heads = self.num_heads
         u = self.act(self.u_proj(x))  # gating
         v = self.act(self.v_proj(x))  # (b, n, hd)  input to TNO
-        # reshape
-        if self.tno_type == 'tno' or self.tno_type == 'tno_inv_time':  # Vanilla Toeplitz Neural Operator (TNO)
+        # maybe reshape
+        if self.tno_type == 'tno' or self.tno_type == 'tno_inv_time':  # Vanilla Toeplitz Neural Operator (TNO) or TNO_FD
             v = rearrange(v, 'b n (h d) -> b h n d', h=num_heads)
             output = self.toep(v, dim=-2, normalize=self.normalize)
             output = rearrange(output, 'b h n d -> b n (h d)')
-        elif self.tno_type == 'skitno':  # Structured Kernel Interpolation (SKI) TNO
-            output = self.toep(v, normalize=self.normalize)
-        else:  # self.tno_type == 'llftno'  # Learned Laplace Features (LLF) TNO
+        else:  # self.tno_type == 'skitno':  # Structured Kernel Interpolation (SKI) TNO
             output = self.toep(v, normalize=self.normalize)
         output = u * output
         if self.use_norm:
             output = self.norm(output)
-            
+
         output = self.o(output)
-        
+
         return output
