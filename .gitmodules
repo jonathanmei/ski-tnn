@@ -1,6 +1,0 @@
-[submodule "fairseq-tnn"]
-	path = fairseq-tnn
-	url = git@gitlab.luminouscomputing.com:ml/research/fairseq-tnn.git
-[submodule "lra-tnn"]
-	path = lra-tnn
-	url = git@gitlab.luminouscomputing.com:ml/research/lra-tnn.git
