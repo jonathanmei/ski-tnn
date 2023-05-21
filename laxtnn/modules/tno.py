@@ -2,12 +2,10 @@ import torch
 import torch.nn as nn
 from einops import rearrange
 
-# from custom fairseq
-from fairseq.modules.helpers import get_activation_fn, print_params
-
 from .rpe import Rpe
-
 from ..utils.profiling import pytorch_profile
+from ..utils.misc import get_activation_fn, print_params
+
 
 class Tno(nn.Module):
     def __init__(

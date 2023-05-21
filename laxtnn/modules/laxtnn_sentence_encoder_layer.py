@@ -4,11 +4,9 @@
 import torch
 import torch.nn as nn
 
-# from custom fairseq
-from fairseq.modules.helpers import get_norm_fn, logging_info
-
 from .glu import GLU
 from .gtu_module import GtuModule
+from ..utils.misc import get_norm_fn, logging_info
 
 
 class LaxtnnSentenceEncoderLayer(nn.Module):

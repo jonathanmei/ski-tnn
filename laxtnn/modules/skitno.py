@@ -1,11 +1,10 @@
 import torch
 
-# from custom fairseq
-from fairseq.modules.helpers import get_activation_fn
-
 from .rpe import Rpe
 from .sltno import Sltno
+from ..utils.misc import get_activation_fn
 from ..utils.toep_mat import ToepMat
+
 
 class SKITno(Sltno):
     def __init__(self, h, dim, r, nk, **kwargs):

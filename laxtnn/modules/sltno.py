@@ -6,9 +6,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-# from custom fairseq
-from fairseq.modules.helpers import print_params
-
+from ..utils.misc import print_params
 from ..utils.profiling import pytorch_profile
 DEFAULT_GAMMA = 0.999
 

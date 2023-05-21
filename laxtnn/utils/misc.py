@@ -7,7 +7,7 @@ import torch.distributed as dist
 import torch.nn.functional as F
 from torch import nn
 
-from ..norm import GatedRMSNorm, RMSNorm, ScaleNorm, SimpleRMSNorm
+from .norm import GatedRMSNorm, RMSNorm, ScaleNorm, SimpleRMSNorm
 
 logging.basicConfig(
     format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
@@ -105,3 +105,16 @@ def get_norm_fn(norm_type):
         return ScaleNorm
     else:
         return nn.LayerNorm
+
+class ActLayer(nn.Module):
+    def __init__(self, act_fun):
+        super().__init__()
+        # get local varables
+        params = locals()
+        # print params
+        print_params(**params)
+        
+        self.act = get_activation_fn(act_fun)
+
+    def forward(self, x):
+        return self.act(x)

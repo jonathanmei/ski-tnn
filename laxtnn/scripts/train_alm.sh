@@ -1,8 +1,9 @@
 #! /usr/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-ARCH=skitno_inv_time
+#ARCH=skitno_inv_time
 wandb_proj=mlp-free-causal
+ARCH=laxtnn_alm_tno_fd_2lyrs
 
 # change to your data dir
 DATA_DIR=${SCRIPT_DIR}/../../data-bin/wikitext-103

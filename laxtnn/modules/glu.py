@@ -1,7 +1,7 @@
 import torch.nn as nn
 
 # from custom fairseq
-from fairseq.modules.helpers import get_activation_fn, print_params
+from ..utils.misc import get_activation_fn, print_params
 
 
 class GLU(nn.Module):

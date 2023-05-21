@@ -1,8 +1,6 @@
 import torch.nn as nn
 
-# from custom fairseq
-from fairseq.modules.helpers import get_norm_fn, print_params
-from fairseq.modules.others import ActLayer
+from ..utils.misc import get_norm_fn, print_params, ActLayer
 
 
 class Rpe(nn.Module):
