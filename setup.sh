@@ -12,7 +12,8 @@ source ~/.bashrc
 
 #create envs
 conda env create --file tnn.yaml
-conda env create --file lra.yaml
-# autoregressive LM
+conda env create -f lra.yaml && conda env update -f lra2.yaml
+# autoregressive and bi-directional LM on wikitext
 # preprocess data
-source setup_data.sh
+source setup_wikitext_data.sh
+bash setup_lra_data.sh

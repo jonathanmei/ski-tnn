@@ -5,6 +5,7 @@ checkpoints
 data-bin
 gpt2_bpe
 wikitext-103-raw
+outputs
 *.json
 *.log
 *.sw?

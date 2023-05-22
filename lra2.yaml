@@ -1,0 +1,7 @@
+name: lra
+channels:
+  - defaults
+dependencies:
+  - pip:
+    - hydra-core==1.2.0
+    - omegaconf==2.2.2

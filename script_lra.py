@@ -174,18 +174,20 @@ warmup_steps_dict = {
 # for these tasks, you should use tno
 tasks = ["aan"]
 tasks = ["imdb"]
-tasks = ["listops"]
+#tasks = ["listops"]
 
 archs = ["tno"]
-archs = ["skitno"]
+#archs = ["tno_fd"]
+#archs = ["skitno"]
 
 # for these tasks, you should use tno2d
-tasks = ["cifar"]
+#tasks = ["cifar"]
 #tasks = ["pathfinder"]
 #tasks = ["pathfinderx"]
 
 #archs = ["tno2d"]
-archs = ["skitno2d"]
+#archs = ["tno_fd2d"]
+#archs = ["skitno2d"]
 
 
 def to_iter(*args):
