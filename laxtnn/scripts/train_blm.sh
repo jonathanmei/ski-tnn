@@ -1,7 +1,9 @@
 #! /usr/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-arch=ski_blm_inv_time
+#arch=laxtnn_blm_baseline_3lyrs
+#arch=ski_blm_inv_time
+arch=laxtnn_blm_tno_fd
 wandb=ski-tnn-blm
 GPUS=1
 
