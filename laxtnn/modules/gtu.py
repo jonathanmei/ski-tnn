@@ -86,7 +86,7 @@ class Gtu(nn.Module):
             kwargs["spike_len"] = spike_len
         if strottle:
             kwargs["strottle_cfg"] = strottle_cfg
-        self.tno_type = args.tno_type
+        self.tno_type = getattr(args, 'tno_type', 'tno')
         config = TnoConfig(
             h=num_heads, 
             dim=self.head_dim,

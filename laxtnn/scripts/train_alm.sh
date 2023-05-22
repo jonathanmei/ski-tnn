@@ -1,9 +1,9 @@
 #! /usr/bin/bash
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
-#ARCH=skitno_inv_time
-wandb_proj=mlp-free-causal
+wandb_proj=ski-tnn-alm
 ARCH=laxtnn_alm_tno_fd_2lyrs
+ARCH=laxtnn_alm_baseline
 
 # change to your data dir
 DATA_DIR=${SCRIPT_DIR}/../../data-bin/wikitext-103
@@ -14,8 +14,8 @@ profile=false
 #profile=true
 
 BATCH_SIZE=8
-#TOKENS_PER_SAMPLE=512
-TOKENS_PER_SAMPLE=2048
+TOKENS_PER_SAMPLE=512
+#TOKENS_PER_SAMPLE=2048
 
 
 #### These don't change as much
@@ -52,6 +52,5 @@ fairseq-train --task $task \
     --batch-size $BATCH_SIZE \
     --max-update $MAX_UPDATE \
     --log-interval 10 \
-    --wandb-project $WANDB_PROJECT \
     --seed 1000 \
      2>&1 | tee $ARCH.log \
