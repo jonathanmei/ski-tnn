@@ -53,10 +53,6 @@ class Gtu(nn.Module):
         # lax
         args=None,
         tno_fd=False,
-        tno_spike=False,
-        spike_len=32,
-        strottle=False,
-        strottle_cfg={},
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -77,15 +73,8 @@ class Gtu(nn.Module):
         self.o = nn.Linear(d1, embed_dim, bias=bias)
         self.act = get_activation_fn(act_fun)
 
-        assert not (tno_fd and tno_spike), "Can only enable 1 TNO variant at a time."
-        assert not (tno_fd and strottle), "Can only enable 1 TNO variant at a time."
-
         TnoModule = TnoFD if tno_fd else Tno
         kwargs = {}
-        if tno_spike:
-            kwargs["spike_len"] = spike_len
-        if strottle:
-            kwargs["strottle_cfg"] = strottle_cfg
         self.tno_type = getattr(args, 'tno_type', 'tno')
         config = TnoConfig(
             h=num_heads, 

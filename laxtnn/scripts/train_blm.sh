@@ -2,16 +2,16 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 arch=ski_blm_inv_time
-wandb="mlp-free-bidirectional"
+wandb=ski-tnn-blm
 GPUS=1
 
-#TOKENS_PER_SAMPLE=512  # Max sequence length
-#MAX_SENTENCES=4
-#UPDATE_FREQ=$(( 512 / $MAX_SENTENCES / $GPUS ))
-
-TOKENS_PER_SAMPLE=2048  # Max sequence length
+TOKENS_PER_SAMPLE=512  # Max sequence length
 MAX_SENTENCES=4
-UPDATE_FREQ=$(( 128 / $MAX_SENTENCES / $GPUS ))
+UPDATE_FREQ=$(( 512 / $MAX_SENTENCES / $GPUS ))
+
+#TOKENS_PER_SAMPLE=2048  # Max sequence length
+#MAX_SENTENCES=4
+#UPDATE_FREQ=$(( 128 / $MAX_SENTENCES / $GPUS ))
 
 # change to your data dir
 DATA_DIR=${SCRIPT_DIR}/../../data-bin/wikitext-103

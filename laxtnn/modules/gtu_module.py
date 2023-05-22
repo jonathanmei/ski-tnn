@@ -44,10 +44,6 @@ class GtuModule(nn.Module):
         # lax
         args=None,
         tno_fd=False,
-        tno_spike=False,
-        spike_len=32,
-        strottle=False,
-        strottle_cfg={},
     ):
         super().__init__()
         # get local varables
@@ -78,10 +74,6 @@ class GtuModule(nn.Module):
             # lax
             args=args,
             tno_fd=tno_fd,
-            tno_spike=tno_spike,
-            spike_len=spike_len,
-            strottle=strottle,
-            strottle_cfg=strottle_cfg,
         )
 
     def prepare_for_onnx_export_(self):

@@ -2,7 +2,7 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 wandb_proj=ski-tnn-alm
-ARCH=laxtnn_alm_tno_fd_2lyrs
+#ARCH=laxtnn_alm_tno_fd_3lyrs
 ARCH=laxtnn_alm_baseline
 
 # change to your data dir

@@ -94,10 +94,6 @@ class LaxtnnEncoderLayer(nn.Module):
             # lax
             args=args,
             tno_fd=getattr(args, "tno_fd", False),
-            tno_spike=getattr(args, "tno_spike", False),
-            spike_len=getattr(args, "spike_len", 32),
-            strottle=getattr(args, "strottle", False),
-            strottle_cfg=getattr(args, "strottle_cfg", {}),
         )
 
     def residual_connection(self, x, residual):
@@ -286,10 +282,6 @@ class LaxtnnDecoderLayer(nn.Module):
             # lax
             args=args,
             tno_fd=getattr(args, "tno_fd", False),
-            tno_spike=getattr(args, "tno_spike", False),
-            spike_len=getattr(args, "spike_len", 32),
-            strottle=getattr(args, "strottle", False),
-            strottle_cfg=getattr(args, "strottle_cfg", {}),
         )
 
     def build_encoder_attention(self, embed_dim, args):
