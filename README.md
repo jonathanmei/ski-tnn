@@ -23,7 +23,13 @@ Also contains a baseline implementation of TNN.
 
 Clone using 
 ```
-git clone https://github.com/jonathanmei/ski-tnn.git
+git clone --recursive https://github.com/jonathanmei/ski-tnn.git
+```
+
+If you miss the recursive flag, you can update after the fact
+```
+cd fairseq-tnn
+git submodule update --init
 ```
 
 On a fresh linux install:
@@ -59,7 +65,7 @@ The architectures and tasks are matched according to the data type. Batch size a
 ### Autoregressive language model
 #### 1) Preprocess data
 
-This is performed by `setup_wikitext.sh` and comes from [fairseq](https://github.com/facebookresearch/fairseq/blob/main/examples/roberta/README.pretraining.md).
+This is performed by `setup_wikitext_data.sh` and comes from [fairseq](https://github.com/facebookresearch/fairseq/blob/main/examples/roberta/README.pretraining.md).
 
 
 #### 2) Train the autoregressive language model
@@ -111,18 +117,21 @@ You should change data_dir to preprocessed data.
 ### LRA
 
 #### 1) Preparation
-We provide the `setup_lra_data.sh` script, but the `aan` dataset requires a manual download.
+We provide the `setup_lra_data.sh` script.
+
+#### 2) Extending
+The `main` branch of this repository points to the `main` branch of the `lra-tnn`, which is a minified version of the code that reproduces the paper. The `dev` branch of this repository points to the `dev` branch of the `lra-tnn` repository, which is a pinned version of [lra]()
 
 ## Citation
 
 ```
 @inproceedings{
-moreno2023ski,
-title={{SKI to go Faster: Accelerating Toeplitz Neural Networks via Asymmetric Kernels}},
-author={Alexander Moreno and Jonathan Mei and Luke Walters},
-booktitle={arXiv:2305.09028},
-year={2023},
-url={https://arxiv.org/abs/2305.09028}
+    moreno2023ski,
+    title={{SKI to go Faster: Accelerating Toeplitz Neural Networks via Asymmetric Kernels}},
+    author={Alexander Moreno and Jonathan Mei and Luke Walters},
+    booktitle={arXiv:2305.09028},
+    year={2023},
+    url={https://arxiv.org/abs/2305.09028}
 }
 ```
 

@@ -1,0 +1,3 @@
+[submodule "lra-tnn"]
+	path = lra-tnn
+	url = git@github.com:jonathanmei/lra-tnn.git
