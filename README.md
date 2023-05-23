@@ -82,13 +82,11 @@ You should change data_dir to preprocessed data.
 
 #### 3) Length extrapolation
 
-After training, you can do a length extrapolation test by the following command, where length is the test length, e.g. 512, 1024,....:
+After training, you can do a length extrapolation test by the following command, replacing model architecture and sequence length as desired:
 
 ```
-bash length_extrapolation.sh tnn_v2_decay_99_pre length
+bash laxtnn/scripts/length_extrapolation.sh laxtnn_alm_tno_fd_3lyrs 4096
 ```
-
-
 
 
 
