@@ -28,7 +28,7 @@ git clone --recursive https://github.com/jonathanmei/ski-tnn.git
 
 If you miss the recursive flag, you can update after the fact
 ```
-cd fairseq-tnn
+cd lra-tnn
 git submodule update --init
 ```
 
