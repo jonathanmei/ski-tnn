@@ -48,8 +48,8 @@ bash setup_lra_data.sh
 In environment `tnn`:
 SKI-TNN and FD-TNN are be found in `laxtnn/`. Run via
 ```
-bash laxtnn/scripts/script_alm.sh
-bash laxtnn/scripts/script_blm.sh
+bash laxtnn/scripts/train_alm.sh
+bash laxtnn/scripts/train_blm.sh
 ```
 
 In environment `lra`:
