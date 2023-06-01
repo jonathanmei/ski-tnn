@@ -6,6 +6,7 @@ import torch.nn as nn
 
 from .tno import Tno  # Vanilla Toeplitz Neural Operator (TNO)
 from .tno_fd import TnoFD
+from .tno_fd_norpe import TnoFDNoRPE
 from .skitno import SKITno  # Structured Kernel Interpolation (SKI) TNO
 from .skitno_inv_time import SKITnoInvTime
 from ..utils.misc import get_activation_fn, get_norm_fn
@@ -52,7 +53,6 @@ class Gtu(nn.Module):
         act_type="none",
         # lax
         args=None,
-        tno_fd=False,
     ):
         super().__init__()
         self.embed_dim = embed_dim
@@ -73,7 +73,6 @@ class Gtu(nn.Module):
         self.o = nn.Linear(d1, embed_dim, bias=bias)
         self.act = get_activation_fn(act_fun)
 
-        TnoModule = TnoFD if tno_fd else Tno
         kwargs = {}
         self.tno_type = getattr(args, 'tno_type', 'tno')
         config = TnoConfig(
@@ -93,7 +92,11 @@ class Gtu(nn.Module):
             norm_type=norm_type,
         ).__dict__
         if self.tno_type == 'tno':  # Vanilla Toeplitz Neural Operator (TNO)
-            self.toep = TnoModule(**config)
+            self.toep = Tno(**config)
+        elif self.tno_type == 'tno_fd':
+            self.toep = TnoFD(**config)
+        elif self.tno_type == 'tno_fd_norpe':
+            self.toep = TnoFDNoRPE(**config)
         elif self.tno_type == 'skitno':  # Structured Kernel Interpolation (SKI) TNO
             self.rank = args.rank
             self.nk = args.nk
@@ -119,7 +122,7 @@ class Gtu(nn.Module):
         u = self.act(self.u_proj(x))  # gating
         v = self.act(self.v_proj(x))  # (b, n, hd)  input to TNO
         # maybe reshape
-        if self.tno_type == 'tno' or self.tno_type == 'tno_inv_time':  # Vanilla Toeplitz Neural Operator (TNO) or TNO_FD
+        if self.tno_type in ['tno','tno_fd','tno_fd_norpe', 'tno_inv_time']:  # Vanilla Toeplitz Neural Operator (TNO) or TNO_FD
             v = rearrange(v, 'b n (h d) -> b h n d', h=num_heads)
             output = self.toep(v, dim=-2, normalize=self.normalize)
             output = rearrange(output, 'b h n d -> b n (h d)')

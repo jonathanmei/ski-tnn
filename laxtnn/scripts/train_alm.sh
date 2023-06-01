@@ -2,8 +2,8 @@
 SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 
 wandb_proj=ski-tnn-alm
-#ARCH=laxtnn_alm_tno_fd_3lyrs
-ARCH=laxtnn_alm_baseline
+ARCH=laxtnn_alm_tno_fd_3lyrs
+# ARCH=laxtnn_alm_baseline
 
 # change to your data dir
 DATA_DIR=${SCRIPT_DIR}/../../data-bin/wikitext-103
@@ -26,7 +26,7 @@ WARM_UP=4000
 UPDATE_FREQ=$(( 128 / $BATCH_SIZE / $n_gpu ))
 PORT=$(( $RANDOM + 2000 ))
 echo $PORT
-LR=0.001
+LR=0.001 # LR for baseline TNN is 0.0005
 CLIP_NORM=1.0
 decay=0.2
 if [ "$profile" = true ]; then

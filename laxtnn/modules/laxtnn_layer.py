@@ -93,7 +93,6 @@ class LaxtnnEncoderLayer(nn.Module):
             act_type=getattr(args, "act_type", "none"),
             # lax
             args=args,
-            tno_fd=getattr(args, "tno_fd", False),
         )
 
     def residual_connection(self, x, residual):
@@ -281,7 +280,6 @@ class LaxtnnDecoderLayer(nn.Module):
             act_type=getattr(args, "act_type", "none"),
             # lax
             args=args,
-            tno_fd=getattr(args, "tno_fd", False),
         )
 
     def build_encoder_attention(self, embed_dim, args):
@@ -316,11 +314,6 @@ class LaxtnnDecoderLayer(nn.Module):
             act_type=getattr(args, "act_type", "none"),
             # lax
             args=args,
-            tno_fd=getattr(args, "tno_fd", False),
-            tno_spike=getattr(args, "tno_spike", False),
-            spike_len=getattr(args, "spike_len", 32),
-            strottle=getattr(args, "strottle", False),
-            strottle_cfg=getattr(args, "strottle_cfg", {}),
         )
 
     def prepare_for_onnx_export_(self):

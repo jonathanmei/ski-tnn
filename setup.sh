@@ -1,5 +1,5 @@
 
-# *** assumes our fork of tnn is on machine and current directory is ./tnn/ ***
+# *** assumes our fork of tnn is on machine and current directory is ./ski-tnn/ ***
 # run as:  source setup.sh
 
 #install conda

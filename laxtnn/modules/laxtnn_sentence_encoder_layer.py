@@ -81,11 +81,6 @@ class LaxtnnSentenceEncoderLayer(nn.Module):
             residual=getattr(args, "residual", False),
             gamma=getattr(args, "gamma", 0.99),
             act_type=getattr(args, "act_type", "none"),
-            tno_fd=getattr(args, "tno_fd", False),
-            tno_spike=getattr(args, "tno_spike", False),
-            spike_len=getattr(args, "spike_len", 32),
-            strottle=getattr(args, "strottle", False),
-            strottle_cfg=getattr(args, "strottle_cfg", {}),
         )
 
     def residual_connection(self, x, residual):
