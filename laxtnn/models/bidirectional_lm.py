@@ -127,8 +127,6 @@ def laxtnn_blm_tno_fd(args):
     args.toep_type = 1
     args.expand_ratio = 3
     args.encoder_attention_heads = 1
-    args.use_decay = True
-    args.gamma = 0.99
     args.use_norm = False
     args.norm_type = "simplermsnorm"
     # rpe
@@ -138,8 +136,8 @@ def laxtnn_blm_tno_fd(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
-
-    args.tno_fd = True
+    
+    args.tno_type = 'tno_fd'
 
 
 @register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_3lyrs")
@@ -151,8 +149,6 @@ def laxtnn_blm_tno_fd_3lyrs(args):
     args.toep_type = 1
     args.expand_ratio = 3
     args.encoder_attention_heads = 1
-    args.use_decay = True
-    args.gamma = 0.99
     args.use_norm = False
     args.norm_type = "simplermsnorm"
     # rpe
@@ -162,6 +158,8 @@ def laxtnn_blm_tno_fd_3lyrs(args):
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
+    
+    args.tno_type = 'tno_fd'
 
 @register_model_architecture("laxtnn_blm", "ski_blm_inv_time")
 def laxtnn_blm_ski_inv_time(args):
@@ -184,8 +182,8 @@ def laxtnn_blm_ski_inv_time(args):
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
 
-@register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_lyrs0")
-def laxtnn_blm_tno_fd_lyrs0(args):
+@register_model_architecture("laxtnn_blm", "laxtnn_blm_tno_fd_norpe")
+def laxtnn_blm_tno_fd_norpe(args):
     base_architecture(args)
     # pos
     args.no_token_positional_embeddings = True
@@ -193,16 +191,10 @@ def laxtnn_blm_tno_fd_lyrs0(args):
     args.toep_type = 1
     args.expand_ratio = 3
     args.encoder_attention_heads = 1
-    args.use_decay = True
-    args.gamma = 0.99
     args.use_norm = False
     args.norm_type = "simplermsnorm"
-    # rpe
-    args.rpe_embedding = 64
-    args.rpe_layers = 0
-    args.residual = False
     # glu
     args.glu_act = "silu"
     args.glu_dim = args.encoder_embed_dim
-
-    args.tno_fd = True
+    # fd
+    args.tno_type = 'tno_fd_norpe'

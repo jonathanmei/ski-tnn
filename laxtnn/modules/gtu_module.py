@@ -43,7 +43,6 @@ class GtuModule(nn.Module):
         act_type="none",
         # lax
         args=None,
-        tno_fd=False,
     ):
         super().__init__()
         # get local varables
@@ -73,7 +72,6 @@ class GtuModule(nn.Module):
             act_type=act_type,
             # lax
             args=args,
-            tno_fd=tno_fd,
         )
 
     def prepare_for_onnx_export_(self):
