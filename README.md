@@ -118,7 +118,7 @@ You should change data_dir to preprocessed data.
 We provide the `setup_lra_data.sh` script.
 
 #### 2) Extending
-The `main` branch of this repository points to the `main` branch of the `lra-tnn`, which is a minified version of the code that reproduces the paper. The `dev` branch of this repository points to the `dev` branch of the `lra-tnn` repository, which is a pinned version of [lra](https://github.com/OpenNLPLab/lra)
+The `main` branch of this repository points to the `main` branch of the `lra-tnn`, which is a minified version of the code that reproduces the paper. The `dev` branch of the `lra-tnn` repository contains implementations of other architectures that allows running more experiments.
 
 ## Citation
 
