@@ -1,7 +1,7 @@
 
 # LRA data
-#wget https://storage.googleapis.com/long-range-arena/lra_release.gz
-#wget http://tangra.cs.yale.edu/newaan/data/releases/2014/aanrelease2014.tar.gz
+wget https://storage.googleapis.com/long-range-arena/lra_release.gz
+wget http://tangra.cs.yale.edu/newaan/data/releases/2014/aanrelease2014.tar.gz
 
 tar -zxvf lra_release.gz -C ..  # creates ../lra_release
 tar -zxvf aanrelease2014.tar.gz -C ../lra_release  # creates ../lra_release/aan
